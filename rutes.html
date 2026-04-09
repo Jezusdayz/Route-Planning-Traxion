@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TraxIA - Routes</title>
+    
+    <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
+    
     <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -11,43 +15,44 @@
     <nav class="navbar-sticky">
         <div class="nav-container">
             <span class="logo">TraxIA</span>
-
             <ul class="nav-links">
-                <li><a href="index.html" class="active">Inicio</a></li>
-                <li><a href="rutes.html">Ruteador</a></li>
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="rutes.html" class="active">Ruteador</a></li>
             </ul>
-
         </div> 
     </nav>
-    
+
+  
+
+    <main class="container">
+        <section class="flex-wrapper">
+            <article class="contenedor">
+                <h2>Chat AI</h2>
+                <div class="chat-placeholder">
+                    <p><strong>Agente:</strong> Hola, soy tu asistente de TraxIA. ¿Qué ruta vamos a estandarizar hoy?</p>
+                </div>
+            </article>
+            
+            <article class="contenedor">
+                <h2>Mapa de rutas</h2>
+                <div id="mapa" class="mapa-interactivo"></div>
+            </article>
+
+            <article class="contenedor">
+                <h2>Panel de Monitoreo</h2>
+                <div class="info-placeholder">
+                    <p>Reglas y métricas activas...</p>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <p>&copy; 2026 Equipo Gamma</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script> 
 </body>
-<header class="site-header">
-<h1 id="main-title-agent"></h1>
-</header>
-
-<main class="container">
-    <section class="flex-wrapper space-evenly">
-    <article class="contenedor">
-        <h1>Aqui va el agente tipo chat</h1>
-    </article>
-    
-    <article class="contenedor">
-        <h1>Aqui va el mapa</h1>
-    </article>
-
-    <article class="contenedor">
-        <h1>Aqui va el panel de monitoreo</h1>
-    </article>
-    </section>
-
-</main>
-
-
-<footer class="site-footer">
-    <div class="footer-content">
-        <p>&copy; 2026 Equipo Gamma</p>
-        
-    </div>
-
-</footer>
 </html>
