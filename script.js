@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     map.addControl(new maplibregl.NavigationControl());
 
-    // Esto asegura que se rellene todo el contenedor
+    
     map.on('load', () => {
         map.resize();
     });

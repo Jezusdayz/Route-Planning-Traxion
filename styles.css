@@ -14,18 +14,14 @@ body{
     background-color: rgb(208, 223, 0);
     color: #333;   
 }
-.nav-container{
+.nav-container {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between; 
     align-items: center;
-    width: 90%;
-    max-width: 1200px;
-    margin: 0 auto;
-    color: rgb(83, 86, 90);
-    font-size: 1.7rem;
-    font-weight: bold;
-    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-
+    width: 100%; 
+    max-width: 100%; 
+    margin: 0; 
+    padding: 10px 0;
 }
 .nav-links {
     display: flex;
@@ -33,12 +29,21 @@ body{
     gap: 20px;
 }
 .nav-links a{
-    color: white;
+    color: rgb(240, 240, 240);
     text-decoration: none;
     font-weight: bold;
 }
 .nav-links a.active{
-    color: white;
+    color: rgb(83, 86, 90);
+}
+.logo {
+    margin-right: auto; 
+    padding-left: 20px; 
+    color: rgb(83, 86, 90);
+    font-size: 1.7rem;
+    font-weight: bold;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-decoration: none;
 }
 
 /* cabecera del sitio */
