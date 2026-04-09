@@ -12,6 +12,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from api.config import settings
 from api.models.costos import CostosFijos, CostosOperativos
 from api.models.nivel_servicio import NivelServicio
+from api.models.seguridad import SeguridadOperativa
 from api.models.vehiculo import Vehiculo
 
 VEHICULOS_DATA = [
@@ -89,6 +90,32 @@ NIVELES_SERVICIO_DATA = [
     },
 ]
 
+SEGURIDAD_DATA = [
+    {
+        "_id": "politica_std",
+        "pasajeros": {
+            "tiempo_maximo_a_bordo_horas": 8.0,
+            "tiempo_recomendado_descanso_horas": 0.5,
+        },
+        "operador": {
+            "max_horas_conduccion_continua": 4.0,
+            "max_horas_jornada": 8.0,
+        },
+        "vehiculo": {
+            "factor_autonomia_segura": 0.85,
+            "margen_combustible_reserva": 0.10,
+        },
+        "servicio": {
+            "tiempo_maximo_espera_min": 15,
+            "buffer_arribo": 0.10,
+        },
+        "ruta": {
+            "factor_distancia_operativa": 1.05,
+            "factor_tiempo_operativo": 1.10,
+        },
+    }
+]
+
 
 async def seed_vehiculos(db) -> None:
     docs = [Vehiculo(**d).model_dump(by_alias=True) for d in VEHICULOS_DATA]
@@ -114,6 +141,12 @@ async def seed_niveles_servicio(db) -> None:
     print(f"  niveles_servicio: {len(docs)} documento(s) insertado(s).")
 
 
+async def seed_seguridad(db) -> None:
+    docs = [SeguridadOperativa(**d).model_dump(by_alias=True) for d in SEGURIDAD_DATA]
+    await db["seguridad"].insert_many(docs)
+    print(f"  seguridad: {len(docs)} documento(s) insertado(s).")
+
+
 async def seed_data():
     client = AsyncIOMotorClient(settings.mongodb_url)
     db = client[settings.mongodb_db_name]
@@ -134,6 +167,7 @@ async def seed_data():
     await seed_costos_variables(db)
     await seed_costos_fijos(db)
     await seed_niveles_servicio(db)
+    await seed_seguridad(db)
 
     print("Seed completado exitosamente.")
     client.close()
