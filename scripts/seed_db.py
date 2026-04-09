@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from api.config import settings
-from api.models.costos import CostosOperativos
+from api.models.costos import CostosFijos, CostosOperativos
 from api.models.vehiculo import Vehiculo
 
 VEHICULOS_DATA = [
@@ -44,6 +44,17 @@ COSTOS_VARIABLES_DATA = [
     }
 ]
 
+COSTOS_FIJOS_DATA = [
+    {
+        "_id": "costos_fijos_scania_k400",
+        "vehiculo_id": "scania_k400",
+        "seguro": {"tipo": "amplia", "costo_anual": 85000.0},
+        "impuesto_circulacion_anual": 4200.0,
+        "cuotas_sindicato_anual": 12000.0,
+        "total_anual": 101200.0,
+    }
+]
+
 
 async def seed_vehiculos(db) -> None:
     docs = [Vehiculo(**d).model_dump(by_alias=True) for d in VEHICULOS_DATA]
@@ -55,6 +66,12 @@ async def seed_costos_variables(db) -> None:
     docs = [CostosOperativos(**d).model_dump(by_alias=True) for d in COSTOS_VARIABLES_DATA]
     await db["costos_variables"].insert_many(docs)
     print(f"  costos_variables: {len(docs)} documento(s) insertado(s).")
+
+
+async def seed_costos_fijos(db) -> None:
+    docs = [CostosFijos(**d).model_dump(by_alias=True) for d in COSTOS_FIJOS_DATA]
+    await db["costos_fijos"].insert_many(docs)
+    print(f"  costos_fijos: {len(docs)} documento(s) insertado(s).")
 
 
 async def seed_data():
@@ -75,6 +92,7 @@ async def seed_data():
 
     await seed_vehiculos(db)
     await seed_costos_variables(db)
+    await seed_costos_fijos(db)
 
     print("Seed completado exitosamente.")
     client.close()
