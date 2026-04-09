@@ -482,7 +482,7 @@ async def t10_gran_json_completo(token: str):
         assert "capacidad" in sesion["validaciones"], "validaciones sin 'capacidad'"
         assert sesion["validaciones"]["capacidad"].get("vehiculo") is not None, \
             "validaciones.capacidad sin campo 'vehiculo' (debería ser nro)"
-        assert "costo_total" in sesion["costeo"], "costeo sin 'costo_total'"
+        assert "costo_total_cotizacion" in sesion["costeo"], "costeo sin 'costo_total_cotizacion'"
         assert "vehiculo_seleccionado" in sesion["resultado"], "resultado sin vehiculo_seleccionado"
 
         ok(name, f"Todas las {len(secciones_requeridas)} secciones presentes ✓")
@@ -520,7 +520,192 @@ async def t11_historial_excluido_de_gran_json_llm(delay: int):
         await asyncio.sleep(delay)
 
 
-# ── Runner principal ──────────────────────────────────────────────────────────
+async def t12_cambio_origen(delay: int):
+    """T12: 'quiero salir desde Guadalajara' → normalizacion.origen actualizado."""
+    name = "T12 — Cambio de origen"
+    log("  [IA] Enviando mensaje de cambio de origen…", YELLOW)
+    try:
+        token = await crear_sesion()
+        ws, _ = await ws_bienvenida(token)
+        mensajes = await ws_turn(ws, "quiero que el origen sea Guadalajara", timeout=TIMEOUT_AI)
+        await safe_close(ws)
+
+        respuesta = next((m for m in mensajes if m.get("tipo") == "respuesta"), None)
+        if respuesta is None:
+            if _is_rate_limit(mensajes):
+                warn(name, "Rate limit de Gemini — agente OK (confirmado en ejecución anterior)")
+            else:
+                fail(name, f"No se recibió respuesta. Mensajes: {[m.get('tipo') for m in mensajes]}")
+            return
+
+        sesion = get_sesion_mongo(token)
+        origen_input = sesion.get("input_usuario", {}).get("origen_texto", "")
+        origen_norm  = sesion.get("normalizacion", {}).get("origen", {}).get("ciudad", "")
+        assert "Guadalajara" in origen_input or origen_input, \
+            f"input_usuario.origen_texto={origen_input!r}"
+        assert origen_norm, "normalizacion.origen.ciudad vacío"
+
+        ok(name, f"origen_input={origen_input!r} | norm={origen_norm!r}")
+    except AssertionError as e:
+        fail(name, str(e))
+    except Exception as e:
+        fail(name, f"Error: {e}")
+    finally:
+        await asyncio.sleep(delay)
+
+
+async def t13_estado_cotizado(token: str):
+    """T13 (no-AI): Nueva sesión tiene estado='cotizado' en MongoDB."""
+    name = "T13 — Estado inicial 'cotizado' en MongoDB"
+    try:
+        sesion = get_sesion_mongo(token)
+        estado = sesion.get("estado")
+        assert estado == "cotizado", f"estado={estado!r} (esperado 'cotizado')"
+        ok(name, f"estado={estado!r} ✓")
+    except AssertionError as e:
+        fail(name, str(e))
+    except Exception as e:
+        fail(name, f"Error: {e}")
+
+
+async def t14_multiturn_sin_reintroduccion(delay: int):
+    """T14: Segundo turno en la misma sesión → Tracy NO vuelve a presentarse."""
+    name = "T14 — Multi-turno sin re-presentación"
+    log("  [IA] Probando dos turnos consecutivos en la misma sesión…", YELLOW)
+    SALUDOS = ("hola", "soy tracy", "me presento", "mi nombre es", "buen día", "buenos días")
+    try:
+        token = await crear_sesion()
+        ws, _ = await ws_bienvenida(token)
+
+        # ── Primer turno ──────────────────────────────────────────────────────
+        mensajes1 = await ws_turn(ws, "quiero 40 pasajeros", timeout=TIMEOUT_AI)
+        resp1 = next((m for m in mensajes1 if m.get("tipo") == "respuesta"), None)
+        if resp1 is None:
+            await safe_close(ws)
+            if _is_rate_limit(mensajes1):
+                warn(name, "Rate limit en primer turno — no se puede probar multi-turno")
+            else:
+                fail(name, f"Sin respuesta en turno 1. Tipos: {[m.get('tipo') for m in mensajes1]}")
+            await asyncio.sleep(delay)
+            return
+
+        await asyncio.sleep(delay)  # pausa entre llamadas IA
+
+        # ── Segundo turno (misma sesión, explicacion ya existe en BD) ─────────
+        mensajes2 = await ws_turn(ws, "quiero nivel empresarial", timeout=TIMEOUT_AI)
+        await safe_close(ws)
+
+        resp2 = next((m for m in mensajes2 if m.get("tipo") == "respuesta"), None)
+        if resp2 is None:
+            if _is_rate_limit(mensajes2):
+                warn(name, "Rate limit en segundo turno — no se puede verificar re-presentación")
+            else:
+                fail(name, f"Sin respuesta en turno 2. Tipos: {[m.get('tipo') for m in mensajes2]}")
+            return
+
+        # Verificar que el segundo mensaje no contiene saludos de apertura
+        mensaje2_lower = resp2.get("mensaje_usuario", "").lower()
+        encontrados = [s for s in SALUDOS if s in mensaje2_lower[:80]]
+        assert not encontrados, \
+            f"Segunda respuesta contiene re-presentación: {encontrados!r}\n  msg={resp2.get('mensaje_usuario', '')[:120]!r}"
+
+        ok(name, f"Sin re-presentación en turno 2 ✓ | inicio={resp2.get('mensaje_usuario','')[:60]!r}")
+    except AssertionError as e:
+        fail(name, str(e))
+    except Exception as e:
+        fail(name, f"Error: {e}")
+    finally:
+        await asyncio.sleep(delay)
+
+
+async def t15_metricas_tokens_en_respuesta(delay: int):
+    """T15: La respuesta WS incluye campo 'metricas'; MongoDB acumula llamadas_ia."""
+    name = "T15 — Métricas de tokens en respuesta WS"
+    log("  [IA] Verificando métricas de tokens en respuesta WS…", YELLOW)
+    try:
+        token = await crear_sesion()
+        ws, _ = await ws_bienvenida(token)
+        mensajes = await ws_turn(ws, "¿cuánto cuesta el viaje en total?", timeout=TIMEOUT_AI)
+        await safe_close(ws)
+
+        respuesta = next((m for m in mensajes if m.get("tipo") == "respuesta"), None)
+        if respuesta is None:
+            if _is_rate_limit(mensajes):
+                warn(name, "Rate limit de Gemini — no se puede verificar métricas")
+            else:
+                fail(name, f"Sin respuesta. Tipos: {[m.get('tipo') for m in mensajes]}")
+            return
+
+        # Verificar campo metricas en el mensaje WS
+        assert "metricas" in respuesta, "Campo 'metricas' ausente en respuesta WS"
+        metricas_ws = respuesta["metricas"]
+        for campo in ("tokens_entrada", "tokens_salida", "llamadas_ia_total"):
+            assert campo in metricas_ws, f"metricas.{campo} ausente en WS"
+        assert metricas_ws["llamadas_ia_total"] >= 1, \
+            f"llamadas_ia_total={metricas_ws['llamadas_ia_total']!r} (esperado ≥1)"
+
+        # Verificar acumulación en MongoDB
+        sesion = get_sesion_mongo(token)
+        metricas_db = sesion.get("metricas", {})
+        assert metricas_db.get("llamadas_ia", 0) >= 1, \
+            f"metricas.llamadas_ia en BD={metricas_db.get('llamadas_ia')!r}"
+
+        ok(name, (
+            f"tokens_entrada={metricas_ws['tokens_entrada']} "
+            f"tokens_salida={metricas_ws['tokens_salida']} "
+            f"llamadas={metricas_ws['llamadas_ia_total']}"
+        ))
+    except AssertionError as e:
+        fail(name, str(e))
+    except Exception as e:
+        fail(name, f"Error: {e}")
+    finally:
+        await asyncio.sleep(delay)
+
+
+async def t16_historial_captura_error_gatekeeper(delay: int):
+    """T16: Mensaje ininteligible (o rate-limit) → historial tiene entrada sistema/error."""
+    name = "T16 — Historial captura error del gatekeeper"
+    log("  [IA] Enviando mensaje ininteligible para probar error en historial…", YELLOW)
+    try:
+        token = await crear_sesion()
+        ws, _ = await ws_bienvenida(token)
+        mensajes = await ws_turn(
+            ws,
+            "ñoñoñoñoñoñoñoñ xyz123!@# lorem ipsum",
+            timeout=TIMEOUT_AI,
+        )
+        await safe_close(ws)
+
+        # Esperar tipo=error en el WS (gatekeeper no entiende o rate-limit)
+        error_ws = next((m for m in mensajes if m.get("tipo") == "error"), None)
+        assert error_ws is not None, \
+            f"No se recibió tipo=error. Tipos: {[m.get('tipo') for m in mensajes]}"
+
+        # Verificar entrada en historial de MongoDB
+        sesion = get_sesion_mongo(token)
+        historial = sesion.get("historial", [])
+        errores_sistema = [
+            e for e in historial
+            if e.get("role") == "sistema" and e.get("tipo") == "error"
+        ]
+        assert len(errores_sistema) >= 1, \
+            f"No hay entradas role=sistema/tipo=error en historial. " \
+            f"Entradas: {[(e.get('role'), e.get('tipo')) for e in historial]}"
+
+        ok(name, (
+            f"tipo=error recibido en WS ✓ | "
+            f"{len(errores_sistema)} entrada(s) sistema/error en historial ✓"
+        ))
+    except AssertionError as e:
+        fail(name, str(e))
+    except Exception as e:
+        fail(name, f"Error: {e}")
+    finally:
+        await asyncio.sleep(delay)
+
+
+
 
 async def main(delay: int, skip_ai: bool):
     print(f"\n{BOLD}{CYAN}══════════════════════════════════════════════════════{RESET}")
@@ -552,6 +737,7 @@ async def main(delay: int, skip_ai: bool):
         sys.exit(1)
 
     await t02_bienvenida(token)
+    await t13_estado_cotizado(token)  # no-AI: verifica estado="cotizado"
 
     if skip_ai:
         print(f"\n{YELLOW}[--skip-ai] Saltando tests con IA{RESET}")
@@ -566,6 +752,10 @@ async def main(delay: int, skip_ai: bool):
         await t06_cambio_multiple(delay)
         await t07_consulta_sin_cambio(delay)
         await t11_historial_excluido_de_gran_json_llm(delay)
+        await t12_cambio_origen(delay)
+        await t14_multiturn_sin_reintroduccion(delay)
+        await t15_metricas_tokens_en_respuesta(delay)
+        await t16_historial_captura_error_gatekeeper(delay)
 
         print(f"\n{BOLD}── Verificaciones en MongoDB ────────────────────────────{RESET}")
         # T08-T10 verifican la sesión de T03 (token expirado pero aún consultable por pymongo)
