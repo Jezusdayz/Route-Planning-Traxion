@@ -37,11 +37,13 @@ async def recalcular_viaje(
     if sesion is None:
         raise ValueError("Sesión no encontrada o expirada.")
 
-    # Merge: input nuevo sobre valores de sesión existentes
+    # Merge: input nuevo sobre valores de sesión existentes; filtra valores centinela
+    _INVALIDOS = {"sin definir", "sin_definir", "", None}
     origen = input_usuario.get("origen_texto") or sesion.get("origen", "")
     destino = input_usuario.get("destino_texto") or sesion.get("destino", "")
     pasajeros = input_usuario.get("pasajeros") or sesion.get("pasajeros", 1)
-    nivel_id = input_usuario.get("nivel_servicio") or sesion.get("nivel_servicio", "economico")
+    nivel_raw = input_usuario.get("nivel_servicio")
+    nivel_id = (nivel_raw if nivel_raw not in _INVALIDOS else None) or sesion.get("nivel_servicio", "economico")
 
     # 1. Geocodificación
     coords_origen = await geocode_ciudad(origen, db)
