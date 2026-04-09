@@ -38,6 +38,25 @@ def _ts() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _parse_explicacion(raw: str) -> dict | None:
+    """Extrae el dict de explicacion del texto del modelo.
+
+    Soporta respuestas con fences markdown (```json … ```) o JSON puro.
+    Retorna None si no se puede parsear.
+    """
+    text = raw.strip()
+    if text.startswith("```"):
+        # Quitar primera línea (```json o ```) y el cierre ```
+        lines = text.splitlines()
+        text = "\n".join(lines[1:])
+        if text.rstrip().endswith("```"):
+            text = text.rstrip()[:-3].rstrip()
+    try:
+        return json.loads(text)
+    except (json.JSONDecodeError, ValueError):
+        return None
+
+
 @router.websocket("/chat/{token}")
 async def chat_viaje(websocket: WebSocket, token: str):
     db = get_db()
@@ -69,15 +88,11 @@ async def chat_viaje(websocket: WebSocket, token: str):
         bienvenida_tokens_salida = bv_result.tokens_salida
         bienvenida_proveedor = bv_result.proveedor
         bienvenida_modelo = bv_result.modelo
-        bienvenida_datos = (
-            json.loads(bv_result.text)
-            if bv_result.text.strip().startswith("{")
-            else {
+        bienvenida_datos = _parse_explicacion(bv_result.text) or {
                 "mensaje_usuario": bv_result.text,
                 "justificacion": [],
                 "supuestos_clave": [],
             }
-        )
     except Exception as exc:
         logger.warning("Error en bienvenida IA: %s", exc)
         bienvenida_proveedor = "sistema"
@@ -234,15 +249,11 @@ async def chat_viaje(websocket: WebSocket, token: str):
                 tokens_fase8_salida = fase8_result.tokens_salida
                 fase8_proveedor = fase8_result.proveedor
                 fase8_modelo = fase8_result.modelo
-                respuesta_datos = (
-                    json.loads(fase8_result.text)
-                    if fase8_result.text.strip().startswith("{")
-                    else {
+                respuesta_datos = _parse_explicacion(fase8_result.text) or {
                         "mensaje_usuario": fase8_result.text,
                         "justificacion": [],
                         "supuestos_clave": [],
                     }
-                )
             except Exception as exc:
                 logger.warning("Error en explicación IA: %s", exc)
                 fase8_proveedor = "sistema"

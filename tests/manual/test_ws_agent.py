@@ -109,9 +109,19 @@ def _is_rate_limit(mensajes: list) -> bool:
                 "rate", "quota", "429", "resource_exhausted",
                 "no pude procesar", "no pude recalcular",
                 "server_connection_closed",
+                "exhausted", "too many", "overloaded",
+                "service unavailable", "503", "500",
             )):
                 return True
     return False
+
+
+def _error_msg(mensajes: list) -> str:
+    """Retorna el primer mensaje de error encontrado en la lista."""
+    for m in mensajes:
+        if m.get("tipo") == "error":
+            return m.get("mensaje", "(sin mensaje)")
+    return "(ningún error encontrado)"
 
 
 # ── HTTP helper ───────────────────────────────────────────────────────────────
@@ -641,10 +651,11 @@ async def t15_metricas_tokens_en_respuesta(delay: int):
 
         respuesta = next((m for m in mensajes if m.get("tipo") == "respuesta"), None)
         if respuesta is None:
+            err_txt = _error_msg(mensajes)
             if _is_rate_limit(mensajes):
-                warn(name, "Rate limit de Gemini — no se puede verificar métricas")
+                warn(name, f"Rate limit de Gemini — no se puede verificar métricas | err='{err_txt[:80]}'")
             else:
-                fail(name, f"Sin respuesta. Tipos: {[m.get('tipo') for m in mensajes]}")
+                fail(name, f"Sin respuesta. Tipos: {[m.get('tipo') for m in mensajes]} | err='{err_txt[:120]}'")
             return
 
         # Verificar campo metricas en el mensaje WS
