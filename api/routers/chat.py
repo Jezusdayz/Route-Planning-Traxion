@@ -49,33 +49,82 @@ async def chat_viaje(websocket: WebSocket, token: str):
 
     await websocket.accept()
 
-    # Bienvenida usando secciones canónicas del Gran JSON
+    # ── BIENVENIDA: explicación IA con Gran JSON completo ─────────────────────
     input_u = sesion.get("input_usuario") or {}
-    resultado_s = sesion.get("resultado") or {}
     costeo_s = sesion.get("costeo") or {}
-    costo_total = resultado_s.get("costo_total") or costeo_s.get("costo_total", 0.0)
 
-    bienvenida = {
+    await _thinking(websocket, "bienvenida", True)
+    bienvenida_proveedor = settings.ai_provider
+    bienvenida_modelo = settings.ai_model
+    bienvenida_tokens_entrada = bienvenida_tokens_salida = 0
+    try:
+        system_prompt_bienvenida = get_system_prompt("explicacion")
+        bv_result = await chat_completion(
+            messages=[
+                {"role": "system", "content": system_prompt_bienvenida},
+                {"role": "user", "content": _gran_json(sesion)},
+            ]
+        )
+        bienvenida_tokens_entrada = bv_result.tokens_entrada
+        bienvenida_tokens_salida = bv_result.tokens_salida
+        bienvenida_proveedor = bv_result.proveedor
+        bienvenida_modelo = bv_result.modelo
+        bienvenida_datos = (
+            json.loads(bv_result.text)
+            if bv_result.text.strip().startswith("{")
+            else {
+                "mensaje_usuario": bv_result.text,
+                "justificacion": [],
+                "supuestos_clave": [],
+            }
+        )
+    except Exception as exc:
+        logger.warning("Error en bienvenida IA: %s", exc)
+        bienvenida_proveedor = "sistema"
+        bienvenida_modelo = "n/a"
+        resultado_s = sesion.get("resultado") or {}
+        costo_total = resultado_s.get("costo_total") or costeo_s.get("costo_total", 0.0)
+        bienvenida_datos = {
+            "mensaje_usuario": (
+                f"[Sistema — IA no disponible: {exc}] "
+                f"Viaje cotizado de {input_u.get('origen_texto', '')} "
+                f"a {input_u.get('destino_texto', '')}. "
+                f"Total: ${costo_total:,.2f} MXN."
+            ),
+            "justificacion": [],
+            "supuestos_clave": [],
+        }
+
+    await _thinking(websocket, "bienvenida", False)
+
+    # Persistir explicacion inicial si la sesión aún no la tiene
+    if not sesion.get("explicacion"):
+        await update_seccion(token, "explicacion", bienvenida_datos, db)
+
+    # Acumular métricas de la bienvenida
+    if bienvenida_tokens_entrada or bienvenida_tokens_salida:
+        await incrementar_metricas(
+            token,
+            tokens_entrada=bienvenida_tokens_entrada,
+            tokens_salida=bienvenida_tokens_salida,
+            db=db,
+        )
+
+    bienvenida_msg = {
         "tipo": "bienvenida",
-        "generado_por": "sistema",
-        "mensaje": (
-            f"¡Hola! Tu viaje de {input_u.get('origen_texto', '')} "
-            f"a {input_u.get('destino_texto', '')} "
-            f"ha sido cotizado exitosamente. "
-            f"Total: ${costo_total:,.2f} MXN. "
-            "¿Deseas ajustar algún detalle del viaje?"
-        ),
+        "generado_por": bienvenida_proveedor,
         "costeo": costeo_s,
+        **bienvenida_datos,
     }
-    await _send(websocket, bienvenida)
+    await _send(websocket, bienvenida_msg)
 
     # Registrar bienvenida en historial de auditoría
     await append_historial(db=db, token=token, entry={
         "role": "tracy",
         "tipo": "bienvenida",
-        "mensaje": bienvenida["mensaje"],
-        "proveedor": "sistema",
-        "modelo": "n/a",
+        "mensaje": bienvenida_datos.get("mensaje_usuario", ""),
+        "proveedor": bienvenida_proveedor,
+        "modelo": bienvenida_modelo,
         "timestamp": _ts(),
     })
 

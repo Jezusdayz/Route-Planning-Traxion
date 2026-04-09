@@ -138,10 +138,17 @@ async def crear_sesion(
 # ── WebSocket helpers ─────────────────────────────────────────────────────────
 
 async def ws_bienvenida(token: str):
-    """Conecta y devuelve (ws, mensaje_bienvenida)."""
+    """Conecta y devuelve (ws, mensaje_bienvenida).
+
+    Descarta mensajes de estado/thinking y retorna cuando recibe tipo=bienvenida.
+    Usa TIMEOUT_AI porque la bienvenida ahora incluye una llamada a la IA.
+    """
     ws = await websockets.connect(f"{WS_URL}/chat/{token}")
-    raw = await asyncio.wait_for(ws.recv(), timeout=TIMEOUT_FAST)
-    return ws, json.loads(raw)
+    while True:
+        raw = await asyncio.wait_for(ws.recv(), timeout=TIMEOUT_AI)
+        msg = json.loads(raw)
+        if msg.get("tipo") == "bienvenida":
+            return ws, msg
 
 
 async def ws_turn(ws, mensaje: str, timeout: int = TIMEOUT_AI):
@@ -203,22 +210,21 @@ async def t01_token_invalido():
 
 
 async def t02_bienvenida(token: str):
-    """T02: Bienvenida contiene tipo, mensaje con origen/destino y costeo."""
+    """T02: Bienvenida IA contiene tipo, mensaje_usuario con contenido y costeo."""
     name = "T02 — Bienvenida con estructura correcta"
     try:
         ws, bienvenida = await ws_bienvenida(token)
         await safe_close(ws)
 
         assert bienvenida.get("tipo") == "bienvenida", f"tipo={bienvenida.get('tipo')!r}"
-        msg = bienvenida.get("mensaje", "")
-        assert "Ciudad de Mexico" in msg or "Pachuca" in msg, \
-            f"Mensaje no menciona origen/destino: {msg!r}"
+        msg = bienvenida.get("mensaje_usuario", "")
+        assert len(msg) > 10, f"mensaje_usuario vacío o muy corto: {msg!r}"
         assert "costeo" in bienvenida, "Falta campo 'costeo'"
         costeo = bienvenida["costeo"] or {}
         costo = costeo.get("costo_total", 0)
-        assert costo > 0, \
-            f"costo_total inválido: {costo}"
-        ok(name, f"costo_total={costo:,.2f} MXN")
+        assert costo > 0, f"costo_total inválido: {costo}"
+        generado = bienvenida.get("generado_por", "desconocido")
+        ok(name, f"costo_total={costo:,.2f} MXN | generado_por={generado!r}")
     except AssertionError as e:
         fail(name, str(e))
     except Exception as e:
