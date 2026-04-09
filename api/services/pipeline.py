@@ -6,7 +6,7 @@ from api.models.nivel_servicio import NivelServicio
 from api.services.geocoding import geocode_ciudad
 from api.services.planner import calcular_mision
 from api.services.routing import calcular_ruta
-from api.services.session_manager import get_session, update_seccion
+from api.services.session_manager import get_session, set_estado, update_seccion
 
 _COLLECTION = "sesiones_viaje"
 
@@ -86,7 +86,7 @@ async def recalcular_viaje(
     await update_seccion(token, "normalizacion", normalizacion, db)
 
     # 6. Re-ejecutar misión (flota + validaciones + costeo)
-    return await calcular_mision(
+    resultado = await calcular_mision(
         token=token,
         pasajeros=pasajeros,
         nivel=nivel,
@@ -94,3 +94,5 @@ async def recalcular_viaje(
         tiempo_base_h=ruta["tiempo_h"],
         db=db,
     )
+    await set_estado(token, "actualizado", db)
+    return resultado

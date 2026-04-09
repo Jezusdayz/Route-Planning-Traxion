@@ -214,9 +214,10 @@ async def t02_bienvenida(token: str):
             f"Mensaje no menciona origen/destino: {msg!r}"
         assert "costeo" in bienvenida, "Falta campo 'costeo'"
         costeo = bienvenida["costeo"] or {}
-        assert costeo.get("costo_total", 0) > 0, \
-            f"costo_total inválido: {costeo.get('costo_total')}"
-        ok(name, f"costo_total={costeo.get('costo_total'):,.2f} MXN")
+        costo = costeo.get("costo_total_cotizacion") or costeo.get("costo_total", 0)
+        assert costo > 0, \
+            f"costo_total_cotizacion inválido: {costo}"
+        ok(name, f"costo_total={costo:,.2f} MXN")
     except AssertionError as e:
         fail(name, str(e))
     except Exception as e:

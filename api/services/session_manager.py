@@ -61,3 +61,30 @@ async def expire_session(token: str, db: AsyncIOMotorDatabase) -> None:
         {"token": token},
         {"$set": {"activa": False, "finalizada_en": datetime.now(timezone.utc)}},
     )
+
+
+async def set_estado(token: str, estado: str, db: AsyncIOMotorDatabase) -> None:
+    """Actualiza el campo estado del ciclo de vida de la sesión."""
+    await db[_COLLECTION].update_one(
+        {"token": token},
+        {"$set": {"estado": estado}},
+    )
+
+
+async def incrementar_metricas(
+    token: str,
+    tokens_entrada: int,
+    tokens_salida: int,
+    db: AsyncIOMotorDatabase,
+) -> None:
+    """Acumula tokens de entrada/salida y llamadas a la IA en la sesión."""
+    await db[_COLLECTION].update_one(
+        {"token": token},
+        {
+            "$inc": {
+                "metricas.tokens_entrada_total": tokens_entrada,
+                "metricas.tokens_salida_total": tokens_salida,
+                "metricas.llamadas_ia": 1,
+            }
+        },
+    )

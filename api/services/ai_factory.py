@@ -6,6 +6,7 @@ y Google Gemini via google-generativeai SDK.
 """
 
 import json
+from typing import NamedTuple
 
 from api.config import settings
 from api.utils.http_client import get_client
@@ -13,11 +14,18 @@ from api.utils.http_client import get_client
 _OPENAI_COMPAT = {"openai", "github", "azure", "ollama"}
 
 
+class ChatResult(NamedTuple):
+    """Resultado de una llamada al proveedor de IA con métricas de tokens."""
+    text: str
+    tokens_entrada: int
+    tokens_salida: int
+
+
 async def chat_completion(
     messages: list[dict],
     model: str | None = None,
     response_format: str | None = None,
-) -> str:
+) -> ChatResult:
     """Envía una solicitud de chat al proveedor de IA configurado.
 
     Args:
@@ -26,7 +34,7 @@ async def chat_completion(
         response_format: Si es 'json_object', solicita respuesta JSON.
 
     Returns:
-        Contenido de texto de la respuesta del modelo.
+        ChatResult con texto de respuesta y métricas de tokens.
     """
     provider = settings.ai_provider.lower()
     target_model = model or settings.ai_model
@@ -41,7 +49,7 @@ async def chat_completion(
     raise ValueError(f"Proveedor de IA no soportado: {provider!r}")
 
 
-async def _openai_chat(messages: list[dict], model: str, response_format: str | None) -> str:
+async def _openai_chat(messages: list[dict], model: str, response_format: str | None) -> ChatResult:
     url = f"{settings.ai_base_url.rstrip('/')}/chat/completions"
     payload: dict = {"model": model, "messages": messages}
     if response_format == "json_object":
@@ -57,10 +65,15 @@ async def _openai_chat(messages: list[dict], model: str, response_format: str | 
         response.raise_for_status()
         data = response.json()
 
-    return data["choices"][0]["message"]["content"]
+    usage = data.get("usage", {})
+    return ChatResult(
+        text=data["choices"][0]["message"]["content"],
+        tokens_entrada=usage.get("prompt_tokens", 0),
+        tokens_salida=usage.get("completion_tokens", 0),
+    )
 
 
-async def _anthropic_chat(messages: list[dict], model: str) -> str:
+async def _anthropic_chat(messages: list[dict], model: str) -> ChatResult:
     """Adapta mensajes al formato Anthropic Messages API."""
     system_content = ""
     user_messages = []
@@ -94,10 +107,15 @@ async def _anthropic_chat(messages: list[dict], model: str) -> str:
         response.raise_for_status()
         data = response.json()
 
-    return data["content"][0]["text"]
+    usage = data.get("usage", {})
+    return ChatResult(
+        text=data["content"][0]["text"],
+        tokens_entrada=usage.get("input_tokens", 0),
+        tokens_salida=usage.get("output_tokens", 0),
+    )
 
 
-async def _gemini_chat(messages: list[dict], model: str, response_format: str | None) -> str:
+async def _gemini_chat(messages: list[dict], model: str, response_format: str | None) -> ChatResult:
     """Adapta mensajes al Google Gemini SDK (google-generativeai)."""
     import google.generativeai as genai  # lazy import — solo cuando se usa Gemini
 
@@ -121,4 +139,10 @@ async def _gemini_chat(messages: list[dict], model: str, response_format: str | 
     )
 
     response = await gen_model.generate_content_async(user_content)
-    return response.text
+
+    usage = response.usage_metadata
+    return ChatResult(
+        text=response.text,
+        tokens_entrada=getattr(usage, "prompt_token_count", 0) or 0,
+        tokens_salida=getattr(usage, "candidates_token_count", 0) or 0,
+    )

@@ -91,7 +91,7 @@ async def gatekeeper(
                 ],
                 response_format="json_object",
             )
-            datos = _extraer_json(respuesta)
+            datos = _extraer_json(respuesta.text)
             gate = GatekeeperResponse(**datos)
 
             if gate.entendido:

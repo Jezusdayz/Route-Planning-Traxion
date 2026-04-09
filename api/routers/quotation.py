@@ -12,7 +12,7 @@ from api.services.auth import generate_token
 from api.services.geocoding import geocode_ciudad
 from api.services.planner import calcular_mision
 from api.services.routing import calcular_ruta
-from api.services.session_manager import create_session, update_seccion
+from api.services.session_manager import create_session, set_estado, update_seccion
 
 router = APIRouter(prefix="/cotizar", tags=["cotización"])
 
@@ -94,6 +94,7 @@ async def iniciar_viaje(request: InicioViajeRequest, db=Depends(get_db)):
         "hora_salida": request.hora_salida.isoformat(),
     }
     await create_session(token, input_usuario, db)
+    await set_estado(token, "cotizado", db)
 
     # 5. Persistir sección normalizacion
     normalizacion = {

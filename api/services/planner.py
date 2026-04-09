@@ -42,7 +42,7 @@ async def calcular_mision(
     buffer_tiempo = nivel.parametros.buffer_tiempo
 
     distancia_operativa = round(distancia_base_km * factor_dist * 2, 2)
-    tiempo_operativo = round(tiempo_base_h * (1 + buffer_tiempo) * 2, 4)
+    tiempo_operativo = round(tiempo_base_h * buffer_tiempo * 2, 4)
 
     planeacion = {
         "tipo_servicio": "point_to_point",
@@ -121,7 +121,7 @@ async def calcular_mision(
         supuestos = resultado_costeo["supuestos"]
         costeo = resultado_costeo["costeo"]
 
-    # Operacion canónica para persistencia (sin campos internos de cálculo)
+    # Operacion canónica para persistencia (incluye autonomia_total para Gran JSON)
     vehiculo = operacion["vehiculo"]
     operacion_persistir = {
         "vehiculo": {
@@ -130,6 +130,7 @@ async def calcular_mision(
             "capacidad_pasajeros": vehiculo["capacidad_pasajeros"],
             "rendimiento_km_l": vehiculo["rendimiento_km_l"],
             "tanque_l": vehiculo["tanque_l"],
+            "autonomia_total": vehiculo["autonomia_total"],
         },
         "unidades": operacion["unidades"],
     }

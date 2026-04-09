@@ -13,7 +13,7 @@ from api.services.auth import validate_token
 from api.services.gatekeeper import gatekeeper
 from api.services.pipeline import recalcular_viaje
 from api.services.resultado_builder import construir_resultado, persistir_resultado
-from api.services.session_manager import append_historial, expire_session, get_session, update_seccion
+from api.services.session_manager import append_historial, expire_session, get_session, incrementar_metricas, update_seccion
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["chat"])
@@ -52,7 +52,7 @@ async def chat_viaje(websocket: WebSocket, token: str):
     input_u = sesion.get("input_usuario") or {}
     resultado_s = sesion.get("resultado") or {}
     costeo_s = sesion.get("costeo") or {}
-    costo_total = resultado_s.get("costo_total") or costeo_s.get("costo_total", 0.0)
+    costo_total = resultado_s.get("costo_total") or costeo_s.get("costo_total_cotizacion", 0.0)
 
     bienvenida = {
         "tipo": "bienvenida",
@@ -81,7 +81,8 @@ async def chat_viaje(websocket: WebSocket, token: str):
             # ── FASE 0: Gatekeeper de Intención (con reintentos) ──────────────
             await _thinking(websocket, "gatekeeper", True)
             try:
-                gate = await gatekeeper(mensaje, sesion.get("input_usuario") or {})
+                gate_result = await gatekeeper(mensaje, sesion.get("input_usuario") or {})
+                gate = gate_result
             except Exception as exc:
                 logger.warning("Error en gatekeeper: %s", exc)
                 await _thinking(websocket, "gatekeeper", False)
@@ -135,19 +136,22 @@ async def chat_viaje(websocket: WebSocket, token: str):
 
             # ── FASE 8: Explicación persuasiva con Gran JSON completo ─────────
             await _thinking(websocket, "explicacion", True)
+            tokens_fase8_entrada = tokens_fase8_salida = 0
             try:
                 system_prompt = get_system_prompt("explicacion")
-                respuesta_ia = await chat_completion(
+                fase8_result = await chat_completion(
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": _gran_json(sesion)},
                     ]
                 )
+                tokens_fase8_entrada = fase8_result.tokens_entrada
+                tokens_fase8_salida = fase8_result.tokens_salida
                 respuesta_datos = (
-                    json.loads(respuesta_ia)
-                    if respuesta_ia.strip().startswith("{")
+                    json.loads(fase8_result.text)
+                    if fase8_result.text.strip().startswith("{")
                     else {
-                        "mensaje_usuario": respuesta_ia,
+                        "mensaje_usuario": fase8_result.text,
                         "justificacion": [],
                         "supuestos_clave": [],
                     }
@@ -168,6 +172,14 @@ async def chat_viaje(websocket: WebSocket, token: str):
             # Persistir sección explicacion en sesión
             await update_seccion(token, "explicacion", respuesta_datos, db)
 
+            # Acumular métricas de tokens en la sesión
+            await incrementar_metricas(
+                token,
+                tokens_entrada=tokens_fase8_entrada,
+                tokens_salida=tokens_fase8_salida,
+                db=db,
+            )
+
             # Registrar respuesta de Tracy en historial de auditoría
             await append_historial(db=db, token=token, entry={
                 "role": "tracy",
@@ -175,9 +187,20 @@ async def chat_viaje(websocket: WebSocket, token: str):
                 "timestamp": _ts(),
             })
 
+            # Leer métricas acumuladas para incluir en respuesta
+            sesion_metricas = await get_session(token, db)
+            metricas_actuales = sesion_metricas.get("metricas", {})
+
             await _send(websocket, {
                 "tipo": "respuesta",
                 "resultado": resultado,
+                "metricas": {
+                    "tokens_entrada": tokens_fase8_entrada,
+                    "tokens_salida": tokens_fase8_salida,
+                    "tokens_entrada_total": metricas_actuales.get("tokens_entrada_total", 0),
+                    "tokens_salida_total": metricas_actuales.get("tokens_salida_total", 0),
+                    "llamadas_ia_total": metricas_actuales.get("llamadas_ia", 0),
+                },
                 **respuesta_datos,
             })
 
