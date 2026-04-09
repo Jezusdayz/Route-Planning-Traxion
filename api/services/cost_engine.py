@@ -86,22 +86,22 @@ async def calcular_costeo(
     supuestos = {
         "precio_combustible": precio_combustible,
         "resumen_flota": resumen_flota,
-        "costo_mantenimiento_km_vehiculo": costo_mant_km,
-        "factor_distancia_aplicado": nivel.parametros.factor_distancia,
-        "buffer_tiempo_aplicado": nivel.parametros.buffer_tiempo,
+        "costo_mantenimiento_km": costo_mant_km,
+        "factor_distancia": nivel.parametros.factor_distancia,
+        "buffer_tiempo": nivel.parametros.buffer_tiempo,
         "factor_servicio": factor_servicio,
-        "autonomia_segura_reserva": 0.20,
+        "autonomia_segura": 0.20,
     }
 
     costeo = {
-        "consumo_combustible_total_l": consumo_total_l,
+        "consumo_combustible_l": consumo_total_l,
         "costo_combustible": costo_combustible,
         "costo_operador": costo_operador,
         "costo_mantenimiento": costo_mantenimiento,
-        "otros_costos_fijos": otros_costos_fijos,
-        "subtotal_operativo": subtotal_operativo,
-        "factor_servicio_multiplicador": factor_servicio,
-        "costo_total_cotizacion": costo_total,
+        "otros_costos": otros_costos_fijos,
+        "subtotal": subtotal_operativo,
+        "factor_servicio": factor_servicio,
+        "costo_total": costo_total,
         "costo_por_pasajero": costo_por_pasajero,
         "costo_por_km": costo_por_km,
     }
