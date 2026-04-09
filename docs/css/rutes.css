@@ -79,7 +79,7 @@ body {
     gap: 6px;
 }
 
-/* Nueva clase para filas de dos elementos 
+/* Nueva clase para filas de dos elementos */
 .form-row {
     display: flex;
     gap: 8px; 
