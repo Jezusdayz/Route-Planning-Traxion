@@ -80,7 +80,16 @@ async def chat_viaje(websocket: WebSocket, token: str):
 
             # ── FASE 0: Gatekeeper de Intención (con reintentos) ──────────────
             await _thinking(websocket, "gatekeeper", True)
-            gate = await gatekeeper(mensaje, sesion.get("input_usuario") or {})
+            try:
+                gate = await gatekeeper(mensaje, sesion.get("input_usuario") or {})
+            except Exception as exc:
+                logger.warning("Error en gatekeeper: %s", exc)
+                await _thinking(websocket, "gatekeeper", False)
+                await _send(websocket, {
+                    "tipo": "error",
+                    "mensaje": f"No pude procesar tu solicitud en este momento: {exc}",
+                })
+                continue
             await _thinking(websocket, "gatekeeper", False)
 
             if not gate.entendido:
