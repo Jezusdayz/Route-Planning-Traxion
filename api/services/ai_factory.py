@@ -1,0 +1,94 @@
+"""Motor de IA multi-proveedor usando httpx.
+
+Soporta cualquier proveedor compatible con OpenAI Chat Completions
+(OpenAI, GitHub Models, Azure OpenAI, Ollama) y Anthropic Messages API.
+"""
+
+import json
+
+from api.config import settings
+from api.utils.http_client import get_client
+
+_OPENAI_COMPAT = {"openai", "github", "azure", "ollama"}
+
+
+async def chat_completion(
+    messages: list[dict],
+    model: str | None = None,
+    response_format: str | None = None,
+) -> str:
+    """Envía una solicitud de chat al proveedor de IA configurado.
+
+    Args:
+        messages: Lista de mensajes con roles 'system', 'user', 'assistant'.
+        model: Override del modelo (usa settings.ai_model si es None).
+        response_format: Si es 'json_object', solicita respuesta JSON.
+
+    Returns:
+        Contenido de texto de la respuesta del modelo.
+    """
+    provider = settings.ai_provider.lower()
+    target_model = model or settings.ai_model
+
+    if provider in _OPENAI_COMPAT:
+        return await _openai_chat(messages, target_model, response_format)
+    if provider == "anthropic":
+        return await _anthropic_chat(messages, target_model)
+
+    raise ValueError(f"Proveedor de IA no soportado: {provider!r}")
+
+
+async def _openai_chat(messages: list[dict], model: str, response_format: str | None) -> str:
+    url = f"{settings.ai_base_url.rstrip('/')}/chat/completions"
+    payload: dict = {"model": model, "messages": messages}
+    if response_format == "json_object":
+        payload["response_format"] = {"type": "json_object"}
+
+    headers = {
+        "Authorization": f"Bearer {settings.ai_api_key}",
+        "Content-Type": "application/json",
+    }
+
+    async with get_client() as client:
+        response = await client.post(url, json=payload, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+
+    return data["choices"][0]["message"]["content"]
+
+
+async def _anthropic_chat(messages: list[dict], model: str) -> str:
+    """Adapta mensajes al formato Anthropic Messages API."""
+    system_content = ""
+    user_messages = []
+
+    for msg in messages:
+        if msg["role"] == "system":
+            system_content = msg["content"]
+        else:
+            user_messages.append({"role": msg["role"], "content": msg["content"]})
+
+    payload: dict = {
+        "model": model,
+        "max_tokens": 2048,
+        "messages": user_messages,
+    }
+    if system_content:
+        payload["system"] = system_content
+
+    headers = {
+        "x-api-key": settings.ai_api_key,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+    }
+
+    async with get_client() as client:
+        response = await client.post(
+            "https://api.anthropic.com/v1/messages",
+            json=payload,
+            headers=headers,
+        )
+        response.raise_for_status()
+        data = response.json()
+
+    return data["content"][0]["text"]
