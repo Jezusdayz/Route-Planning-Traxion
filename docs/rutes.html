@@ -4,51 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TraxIA - Routes</title>
+    
     <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=1.1">
+    
+    <link rel="stylesheet" href="css/rutes.css">
 </head>
 
 <body id="distribucion-principal">
-    <nav class="navbar-sticky">
-        <div class="nav-container">
-            <a href="index.html" class="logo">TraxIA</a>
-            <ul class="nav-links">
-                <li><a href="index.html" class="active">Inicio</a></li>
-                <li><a href="rutes.html">Ruteador</a></li>
-            </ul>
-        </div> 
-    </nav>
+    <!-- El navbar se llama en todos ema -->
+    <div id="navbar"></div>
 
     <main class="container">
         <section class="flex-wrapper">
-            <article class="contenedor">
-                <h2>Asistente Tracy</h2>
-                <div id="agent-wrapper" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
-                    <div id="setup-form">
-                        <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Configura los parámetros:</p>
-                        <div class="form-group">
-                            <input type="text" id="route-origin" placeholder="Origen">
-                            <input type="text" id="route-dest" placeholder="Destino">
-                            <select id="unit-type">
-                                <option value="40">Unidad 40 Plazas</option>
-                                <option value="20">Unidad 20 Plazas</option>
-                            </select>
-                        </div>
-                        <button id="start-chat-btn" onclick="startAgent()">Configurar Agente</button>
-                    </div>
+           <article class="contenedor">
+    <h2>Asistente</h2>
+    <div id="chat-container">
+        <div id="chat-window">
+            <div class="bot-msg">
+                <strong>Tracy:</strong> Hola, soy tu asistente Tracy. ¿Qué ruta vamos a recorrer hoy?
+            </div>
+        </div>
 
-                    <div id="chat-container" style="display: none;">
-                        <div id="chat-window">
-                            <div class="bot-msg"><strong>Tracy:</strong> ¡Listo! Ruta configurada. ¿En qué puedo ayudarte?</div>
-                        </div>
-                        <div class="chat-input-area">
-                            <input type="text" id="user-input" placeholder="Escribe un mensaje...">
-                            <button id="send-btn" onclick="sendMessage()">Enviar</button>
-                        </div>
-                    </div>
-                </div>
-            </article>
+        <div class="chat-input-area">
+            <input type="text" id="user-input" placeholder="Escribe un mensaje...">
+            <button id="send-btn" onclick="sendMessage()">Enviar</button>
+        </div>
+    </div>
+</article>
             
             <article class="contenedor">
                 <h2>Mapa de rutas</h2>
@@ -57,27 +40,8 @@
 
             <article class="contenedor">
                 <h2>Panel de Monitoreo</h2>
-                <div id="monitoring-grid">
-                    <section class="monitoreo-card">
-                        <div class="diag-mini">
-                            <div class="monitor-item">
-                                <span>Gasolina: <strong id="fuel-text">--%</strong></span>
-                                <div class="progress-bar"><div id="fuel-bar" class="fill"></div></div>
-                            </div>
-                            <div class="monitor-item">
-                                <span>Distancia: <strong id="dist-val">0.0</strong>/14.2km</span>
-                                <div class="progress-bar"><div id="dist-bar" class="fill" style="background:#007bff; width:0%;"></div></div>
-                            </div>
-                            <div class="freno-box"><span>Frenos:</span> <b style="color:#28a745">OK</b></div>
-                        </div>
-                    </section>
-                    <section class="monitoreo-card">
-                        <ul class="rules-list">
-                            <li>Vías Primarias</li>
-                            <li>Evitar Zonas Restr.</li>
-                            <li>Eficiencia Eogias</li>
-                        </ul>
-                    </section>
+                <div class="info-placeholder">
+                    <p>Reglas y métricas activas...</p>
                 </div>
             </article>
         </section>
@@ -88,6 +52,8 @@
             <p>&copy; 2026 Equipo Gamma</p>
         </div>
     </footer>
-    <script src="script.js"></script> 
+
+    <script src="js/script.js"></script> 
+    <script src="js/navbar.js"></script>
 </body>
 </html>
