@@ -186,7 +186,15 @@ async def seed_ciudades(db) -> None:
 
 
 async def seed_rutas(db) -> None:
-    docs = [Ruta(**d).model_dump(by_alias=True) for d in RUTAS_DATA]
+    from datetime import datetime
+    docs = []
+    for d in RUTAS_DATA:
+        doc = Ruta(**d).model_dump(by_alias=True)
+        # BSON no soporta datetime.date — convertir a datetime
+        if hasattr(doc.get("ultima_actualizacion"), "year"):
+            dt = doc["ultima_actualizacion"]
+            doc["ultima_actualizacion"] = datetime(dt.year, dt.month, dt.day)
+        docs.append(doc)
     await db["rutas"].insert_many(docs)
     print(f"  rutas: {len(docs)} documento(s) insertado(s).")
 
