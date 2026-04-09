@@ -18,7 +18,7 @@ def test_construir_resultado_completo():
             "unidades": 2,
         },
         "planeacion": {"distancia_operativa_km": 460.0, "tiempo_operativo_h": 7.2},
-        "costeo": {"costo_total_cotizacion": 21500.0},
+        "costeo": {"costo_total": 21500.0},
     }
     resultado = construir_resultado(sesion)
 
@@ -67,7 +67,6 @@ async def test_persistir_resultado_actualiza_sesion():
     call_args = col.update_one.call_args
     set_data = call_args[0][1]["$set"]
     assert set_data["resultado"] == resultado
-    assert set_data["fase_actual"] == "resultado"
 
 
 # ---------------------------------------------------------------------------

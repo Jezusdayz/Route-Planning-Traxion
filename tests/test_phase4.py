@@ -120,7 +120,7 @@ async def test_cotizar_iniciar_exitoso():
     assert data["status"] == "success"
     assert "token" in data
     assert data["ws_url"].startswith("ws://")
-    assert data["resumen_cotizacion"]["total"] > 0
+    assert data["costeo"]["costo_total"] > 0
 
 
 @pytest.mark.asyncio
@@ -182,10 +182,13 @@ async def test_ws_token_valido_bienvenida():
         "token": "token-valido-123",
         "activa": True,
         "expira_en": datetime.now(timezone.utc) + timedelta(hours=1),
-        "origen": "Monterrey",
-        "destino": "Guadalajara",
-        "distancia_km": 450.0,
-        "cotizacion": {"total": 12500.50},
+        "input_usuario": {
+            "origen_texto": "Monterrey",
+            "destino_texto": "Guadalajara",
+            "pasajeros": 30,
+            "nivel_servicio": "economico",
+        },
+        "costeo": {"costo_total": 12500.50},
     }
 
     db_mock = MagicMock()

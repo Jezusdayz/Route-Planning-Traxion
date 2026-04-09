@@ -118,7 +118,7 @@ async def test_consumo_combustible_calculo_correcto(nivel_economico):
         pasajeros=35,
         db=db,
     )
-    assert resultado["costeo"]["consumo_combustible_total_l"] == 125.0
+    assert resultado["costeo"]["consumo_combustible_l"] == 125.0
     # 125 * 23.5 = 2937.5
     assert resultado["costeo"]["costo_combustible"] == 2937.5
 
@@ -136,7 +136,7 @@ async def test_consumo_combustible_multiples_unidades(nivel_economico):
         pasajeros=70,
         db=db,
     )
-    assert resultado["costeo"]["consumo_combustible_total_l"] == 250.0
+    assert resultado["costeo"]["consumo_combustible_l"] == 250.0
     assert resultado["costeo"]["costo_combustible"] == 5875.0
 
 
@@ -196,9 +196,9 @@ async def test_factor_servicio_aplicado_en_total(nivel_empresarial):
         db=db,
     )
     c = resultado["costeo"]
-    expected_total = round(c["subtotal_operativo"] * 1.5, 2)
-    assert c["costo_total_cotizacion"] == expected_total
-    assert c["factor_servicio_multiplicador"] == 1.5
+    expected_total = round(c["subtotal"] * 1.5, 2)
+    assert c["costo_total"] == expected_total
+    assert c["factor_servicio"] == 1.5
 
 
 @pytest.mark.asyncio
@@ -215,7 +215,7 @@ async def test_kpi_costo_por_pasajero(nivel_economico):
         db=db,
     )
     c = resultado["costeo"]
-    expected = round(c["costo_total_cotizacion"] / 35, 2)
+    expected = round(c["costo_total"] / 35, 2)
     assert c["costo_por_pasajero"] == expected
 
 
@@ -233,7 +233,7 @@ async def test_kpi_costo_por_km(nivel_economico):
         db=db,
     )
     c = resultado["costeo"]
-    expected = round(c["costo_total_cotizacion"] / 400.0, 2)
+    expected = round(c["costo_total"] / 400.0, 2)
     assert c["costo_por_km"] == expected
 
 
@@ -258,4 +258,4 @@ async def test_supuestos_captura_precio_combustible(nivel_economico):
     assert s["factor_servicio"] == 1.0
     assert "resumen_flota" in s
     assert "Scania K310" in s["resumen_flota"]
-    assert s["autonomia_segura_reserva"] == 0.20
+    assert s["autonomia_segura"] == 0.20
