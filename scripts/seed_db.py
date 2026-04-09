@@ -13,6 +13,7 @@ from api.config import settings
 from api.models.ciudad import Ciudad
 from api.models.costos import CostosFijos, CostosOperativos
 from api.models.nivel_servicio import NivelServicio
+from api.models.ruta import Ruta
 from api.models.seguridad import SeguridadOperativa
 from api.models.vehiculo import Vehiculo
 
@@ -124,6 +125,29 @@ CIUDADES_DATA = [
     {"nombre": "puebla", "lat": 19.0414, "lon": -98.2063, "pais": "México"},
 ]
 
+RUTAS_DATA = [
+    {
+        "_id": "cdmx_pachuca",
+        "origen": "cdmx",
+        "destino": "pachuca",
+        "distancia_km": 92.0,
+        "tiempo_h": 1.5,
+        "distancia_operativa_km": 96.6,
+        "tiempo_operativo_h": 1.65,
+        "ultima_actualizacion": "2026-04-09",
+    },
+    {
+        "_id": "cdmx_queretaro",
+        "origen": "cdmx",
+        "destino": "queretaro",
+        "distancia_km": 215.0,
+        "tiempo_h": 3.0,
+        "distancia_operativa_km": 225.75,
+        "tiempo_operativo_h": 3.30,
+        "ultima_actualizacion": "2026-04-09",
+    },
+]
+
 
 async def seed_vehiculos(db) -> None:
     docs = [Vehiculo(**d).model_dump(by_alias=True) for d in VEHICULOS_DATA]
@@ -161,6 +185,12 @@ async def seed_ciudades(db) -> None:
     print(f"  ciudades: {len(docs)} documento(s) insertado(s).")
 
 
+async def seed_rutas(db) -> None:
+    docs = [Ruta(**d).model_dump(by_alias=True) for d in RUTAS_DATA]
+    await db["rutas"].insert_many(docs)
+    print(f"  rutas: {len(docs)} documento(s) insertado(s).")
+
+
 async def seed_data():
     client = AsyncIOMotorClient(settings.mongodb_url)
     db = client[settings.mongodb_db_name]
@@ -183,6 +213,7 @@ async def seed_data():
     await seed_niveles_servicio(db)
     await seed_seguridad(db)
     await seed_ciudades(db)
+    await seed_rutas(db)
 
     print("Seed completado exitosamente.")
     client.close()
