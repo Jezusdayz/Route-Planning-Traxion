@@ -5,6 +5,13 @@ import pytest
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from api.services.ai_factory import ChatResult
+
+
+def _mock_chat_result(text: str, proveedor: str = "openai", modelo: str = "test") -> ChatResult:
+    """Helper para crear un ChatResult de prueba."""
+    return ChatResult(text=text, tokens_entrada=10, tokens_salida=5, proveedor=proveedor, modelo=modelo)
+
 
 # ---------------------------------------------------------------------------
 # Tests: AIFactory
@@ -37,7 +44,9 @@ async def test_ai_factory_openai_compatible():
         from api.services.ai_factory import chat_completion
         result = await chat_completion([{"role": "user", "content": "hola"}])
 
-    assert result == '{"origen_texto": "Monterrey"}'
+    assert result.text == '{"origen_texto": "Monterrey"}'
+    assert result.proveedor == "openai"
+    assert result.tokens_entrada == 0
 
 
 @pytest.mark.asyncio
@@ -70,7 +79,8 @@ async def test_ai_factory_anthropic():
             {"role": "user", "content": "hola"},
         ])
 
-    assert result == "Hola desde Anthropic"
+    assert result.text == "Hola desde Anthropic"
+    assert result.proveedor == "anthropic"
     # Verifica que se usó el endpoint de Anthropic
     call_args = client_mock.post.call_args
     assert "anthropic.com" in call_args[0][0]
@@ -139,7 +149,8 @@ async def test_extraer_input_estructura():
     })
 
     with patch("api.services.input_extractor.get_system_prompt", return_value="prompt"), \
-         patch("api.services.input_extractor.chat_completion", AsyncMock(return_value=ia_response)):
+         patch("api.services.input_extractor.chat_completion",
+               AsyncMock(return_value=_mock_chat_result(ia_response))):
 
         from api.services.input_extractor import extraer_input
         result = await extraer_input("Necesito ir de Monterrey a Guadalajara con 40 pasajeros")
@@ -162,7 +173,8 @@ async def test_extraer_input_respuesta_sin_anidacion():
     })
 
     with patch("api.services.input_extractor.get_system_prompt", return_value="prompt"), \
-         patch("api.services.input_extractor.chat_completion", AsyncMock(return_value=ia_response)):
+         patch("api.services.input_extractor.chat_completion",
+               AsyncMock(return_value=_mock_chat_result(ia_response))):
 
         from api.services.input_extractor import extraer_input
         result = await extraer_input("Quiero ir de CDMX a Pachuca")

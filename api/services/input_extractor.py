@@ -52,7 +52,7 @@ async def extraer_input(
         response_format="json_object",
     )
 
-    datos = _extraer_json(respuesta)
+    datos = _extraer_json(respuesta.text)
 
     # Normalizar: extraer solo input_usuario si el modelo lo anidó
     input_data = datos.get("input_usuario", datos)

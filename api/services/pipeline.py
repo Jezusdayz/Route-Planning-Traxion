@@ -6,7 +6,7 @@ from api.models.nivel_servicio import NivelServicio
 from api.services.geocoding import geocode_ciudad
 from api.services.planner import calcular_mision
 from api.services.routing import calcular_ruta
-from api.services.session_manager import get_session
+from api.services.session_manager import get_session, set_estado, update_seccion
 
 _COLLECTION = "sesiones_viaje"
 
@@ -37,11 +37,17 @@ async def recalcular_viaje(
     if sesion is None:
         raise ValueError("Sesión no encontrada o expirada.")
 
-    # Merge: input nuevo sobre valores de sesión existentes
-    origen = input_usuario.get("origen_texto") or sesion.get("origen", "")
-    destino = input_usuario.get("destino_texto") or sesion.get("destino", "")
-    pasajeros = input_usuario.get("pasajeros") or sesion.get("pasajeros", 1)
-    nivel_id = input_usuario.get("nivel_servicio") or sesion.get("nivel_servicio", "economico")
+    # Leer valores actuales desde sección input_usuario de la sesión
+    input_actual = sesion.get("input_usuario") or {}
+
+    # Merge: input nuevo sobre valores de sesión existentes; filtra valores centinela
+    _INVALIDOS = {"sin definir", "sin_definir", "", None}
+    origen = input_usuario.get("origen_texto") or input_actual.get("origen_texto", "")
+    destino = input_usuario.get("destino_texto") or input_actual.get("destino_texto", "")
+    pasajeros = input_usuario.get("pasajeros") or input_actual.get("pasajeros", 1)
+    nivel_raw = input_usuario.get("nivel_servicio")
+    nivel_id = (nivel_raw if nivel_raw not in _INVALIDOS else None) or input_actual.get("nivel_servicio", "economico")
+    duracion = input_usuario.get("duracion_estimada_horas") or input_actual.get("duracion_estimada_horas")
 
     # 1. Geocodificación
     coords_origen = await geocode_ciudad(origen, db)
@@ -59,24 +65,28 @@ async def recalcular_viaje(
         raise ValueError(f"Nivel de servicio no encontrado: {nivel_id!r}.")
     nivel = NivelServicio.model_validate(nivel_doc)
 
-    # 4. Actualizar base de la sesión con los nuevos datos
-    await db[_COLLECTION].update_one(
-        {"token": token},
-        {
-            "$set": {
-                "origen": origen,
-                "destino": destino,
-                "pasajeros": pasajeros,
-                "nivel_servicio": nivel_id,
-                "distancia_km": ruta["distancia_km"],
-                "tiempo_h": ruta["tiempo_h"],
-                "input_usuario": input_usuario,
-            }
-        },
-    )
+    # 4. Actualizar sección input_usuario con los nuevos datos
+    input_actualizado = {
+        **input_actual,
+        "origen_texto": origen,
+        "destino_texto": destino,
+        "pasajeros": pasajeros,
+        "nivel_servicio": nivel_id,
+    }
+    if duracion is not None:
+        input_actualizado["duracion_estimada_horas"] = duracion
 
-    # 5. Re-ejecutar misión (flota + validaciones + costeo)
-    return await calcular_mision(
+    await update_seccion(token, "input_usuario", input_actualizado, db)
+
+    # 5. Actualizar normalizacion
+    normalizacion = {
+        "origen": {"ciudad": origen, "lat": coords_origen["lat"], "lon": coords_origen["lon"]},
+        "destino": {"ciudad": destino, "lat": coords_destino["lat"], "lon": coords_destino["lon"]},
+    }
+    await update_seccion(token, "normalizacion", normalizacion, db)
+
+    # 6. Re-ejecutar misión (flota + validaciones + costeo)
+    resultado = await calcular_mision(
         token=token,
         pasajeros=pasajeros,
         nivel=nivel,
@@ -84,3 +94,5 @@ async def recalcular_viaje(
         tiempo_base_h=ruta["tiempo_h"],
         db=db,
     )
+    await set_estado(token, "actualizado", db)
+    return resultado

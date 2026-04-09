@@ -1,7 +1,5 @@
 """Motor de planeación operativa: orquesta flota, validación y persistencia."""
 
-from datetime import datetime, timezone
-
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from api.models.nivel_servicio import NivelServicio
@@ -31,7 +29,7 @@ async def calcular_mision(
     2. Selecciona la flota óptima.
     3. Ejecuta las tres validaciones de viabilidad.
     4. Si viable: calcula costeo granular y supuestos.
-    5. Persiste el resultado en la sesión (acumulativo).
+    5. Persiste cada sección por separado ($set quirúrgico).
 
     Returns:
         Dict con claves 'planeacion', 'operacion', 'validaciones',
@@ -66,10 +64,23 @@ async def calcular_mision(
     val_autonomia = validar_autonomia(distancia_operativa, autonomia)
     val_tiempo = await validar_tiempo_operacion(tiempo_operativo, db)
 
+    # Mapear a esquema canónico Gran JSON
     validaciones = {
-        "capacidad": val_capacidad,
-        "autonomia": val_autonomia,
-        "tiempo_operacion": val_tiempo,
+        "capacidad": {
+            "requerida": val_capacidad["requerida"],
+            "vehiculo": val_capacidad["capacidad_total"],
+            "valido": val_capacidad["valido"],
+        },
+        "autonomia": {
+            "distancia_total": val_autonomia["distancia_total_km"],
+            "autonomia_vehiculo": val_autonomia["autonomia_vehiculo_km"],
+            "valido": val_autonomia["valido"],
+        },
+        "tiempo_operacion": {
+            "maximo_permitido": val_tiempo["maximo_permitido_h"],
+            "estimado": val_tiempo["estimado_h"],
+            "valido": val_tiempo["valido"],
+        },
     }
 
     errores = (
@@ -110,19 +121,29 @@ async def calcular_mision(
         supuestos = resultado_costeo["supuestos"]
         costeo = resultado_costeo["costeo"]
 
+    # Operacion canónica para persistencia (incluye autonomia_total para Gran JSON)
+    vehiculo = operacion["vehiculo"]
+    operacion_persistir = {
+        "vehiculo": {
+            "tipo": vehiculo["tipo"],
+            "modelo": vehiculo["modelo"],
+            "capacidad_pasajeros": vehiculo["capacidad_pasajeros"],
+            "rendimiento_km_l": vehiculo["rendimiento_km_l"],
+            "tanque_l": vehiculo["tanque_l"],
+            "autonomia_total": vehiculo["autonomia_total"],
+        },
+        "unidades": operacion["unidades"],
+    }
+
     await db[_COLLECTION].update_one(
         {"token": token},
         {
             "$set": {
                 "planeacion": planeacion,
-                "operacion": operacion,
+                "operacion": operacion_persistir,
                 "validaciones": validaciones,
-                "viaje_viable": len(errores) == 0,
-                "errores_viabilidad": errores,
                 "supuestos": supuestos,
                 "costeo": costeo,
-                "fase_actual": "planeacion",
-                "actualizado_en": datetime.now(timezone.utc),
             }
         },
     )

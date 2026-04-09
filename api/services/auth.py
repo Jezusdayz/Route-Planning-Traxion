@@ -20,9 +20,12 @@ async def validate_token(token: str, db: AsyncIOMotorDatabase) -> dict | None:
     if sesion is None:
         return None
     expira_en = sesion.get("expira_en")
-    if expira_en and datetime.now(timezone.utc) > expira_en:
-        await db[_COLLECTION].update_one({"token": token}, {"$set": {"activa": False}})
-        return None
+    if expira_en:
+        if expira_en.tzinfo is None:
+            expira_en = expira_en.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) > expira_en:
+            await db[_COLLECTION].update_one({"token": token}, {"$set": {"activa": False}})
+            return None
     return sesion
 
 
