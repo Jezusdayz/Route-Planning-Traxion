@@ -452,9 +452,22 @@ async def t08_historial_mongodb(token: str):
             if entry["role"] != "user":
                 assert "proveedor" in entry, f"entry[{i}] ({entry['role']}) sin 'proveedor'"
                 assert "modelo" in entry,    f"entry[{i}] ({entry['role']}) sin 'modelo'"
+            # Entradas de tracy deben incluir justificacion y supuestos_clave completos
+            if entry["role"] == "tracy":
+                assert "justificacion" in entry,   f"entry[{i}] (tracy) sin 'justificacion'"
+                assert "supuestos_clave" in entry,  f"entry[{i}] (tracy) sin 'supuestos_clave'"
+                assert isinstance(entry["justificacion"], list),  \
+                    f"entry[{i}] justificacion no es lista"
+                assert isinstance(entry["supuestos_clave"], list), \
+                    f"entry[{i}] supuestos_clave no es lista"
 
         errores = [e for e in historial if e.get("tipo") == "error"]
-        ok(name, f"{len(historial)} entradas | roles={set(roles)} | errores={len(errores)}")
+        tracy_entries = [e for e in historial if e.get("role") == "tracy"]
+        sample_just = tracy_entries[0].get("justificacion", []) if tracy_entries else []
+        ok(name, (
+            f"{len(historial)} entradas | roles={set(roles)} | errores={len(errores)} | "
+            f"justificacion[0]={sample_just[:2]!r}"
+        ))
     except AssertionError as e:
         fail(name, str(e))
     except Exception as e:
