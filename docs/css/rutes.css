@@ -5,6 +5,7 @@ body {
     line-height: 1.6;
     background-color: white;
     color: rgb(83, 86, 90);
+    list-style: none;
 }
 
 .navbar-sticky {
@@ -24,7 +25,7 @@ body {
 }
 
 .container {
-    background-color: rgb(240, 240, 240);
+    background: linear-gradient(180deg, #ffffff 0%, #ababab 50%, #848484 100%);
     width: 100%;
     margin: 5px auto;
 }
@@ -43,8 +44,8 @@ body {
 .contenedor {
     color: rgb(83, 86, 90);
     flex: 1;
-    background-color: rgb(240, 240, 240);
-    border: 2px solid rgb(83, 86, 90);
+    background-color: rgb(242, 242, 242);
+    border: 4px solid rgb(220, 220, 220);
     border-radius: 3px;
     padding: 5px;
     display: flex;
@@ -112,18 +113,18 @@ body {
 }
 
 #start-chat-btn {
-    background: #28a745;
+    background: rgb(208, 223, 0);
     color: white;
     border: none;
     padding: 10px;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     font-weight: bold;
     transition: background 0.3s;
 }
 
 #start-chat-btn:hover {
-    background: #218838;
+    background: rgb(185, 198, 2);
 }
 
 /* --- FASE 2: CHAT DINÁMICO --- */
@@ -222,4 +223,38 @@ footer {
     padding: 20px;
     background-color: rgb(240, 240, 240);
     text-align: center;
+}
+
+/* Titulares */
+h2 {
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+  color: rgb(83, 86, 90);
+  border-bottom: 3px solid rgb(208, 223, 0);
+  padding-bottom: 4px;
+}
+
+/* Botones generales */
+button {
+  font-size: 0.9rem;
+  padding: 8px 14px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  transform: scale(1.05);
+}
+
+/* Ajuste responsive */
+@media (max-width: 768px) {
+  .flex-wrapper {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .contenedor {
+    min-height: 250px;
+    font-size: 12px;
+  }
 }
