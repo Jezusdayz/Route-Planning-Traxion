@@ -358,6 +358,36 @@ footer {
     transition: transform 0.3s ease, background-color 0.3s ease;
 }
 
+.btn-secondary {
+    background-color: transparent;
+    color: #ffffff;
+    padding: 12px 25px;
+    border-radius: 25px;
+    border: 2px solid #ffffff;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+/* Efecto al pasar el cursor */
+.btn-secondary:hover {
+    background-color: #ffffff;
+    color: #53565A;
+    transform: scale(1.05);
+}
+
+/* Efecto al hacer clic */
+.btn-secondary:active {
+    transform: scale(0.98);
+}
+
+/* Accesibilidad para navegación con teclado */
+.btn-secondary:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(208, 223, 0, 0.6);
+}
+
 .btn-primary:hover {
     transform: scale(1.05);
     background-color: rgb(190, 205, 0);
@@ -430,4 +460,230 @@ footer {
 
 .cta-yellow .btn-primary:hover {
     background-color: #333333;
+}
+
+/* ============================= */
+/* VARIABLES GLOBALES */
+/* ============================= */
+:root {
+    --primary: #D0DF00;
+    --primary-dark: #B7C800;
+    --secondary: #53565A;
+    --light: #F4F6F8;
+    --white: #FFFFFF;
+    --dark: #2B2B2B;
+    --gradient: linear-gradient(135deg, #D0DF00, #F4FF6A);
+    --shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    --radius: 14px;
+}
+
+/* ============================= */
+/* ESTILOS GENERALES */
+/* ============================= */
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background-color: var(--white);
+    color: var(--secondary);
+    margin: 0;
+    padding: 0;
+}
+
+/* Scroll personalizado */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 10px;
+}
+
+/* ============================= */
+/* NAVBAR */
+/* ============================= */
+.navbar-sticky {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.nav-links a {
+    color: var(--secondary);
+    font-weight: 600;
+    position: relative;
+}
+
+.nav-links a::after {
+    content: "";
+    width: 0%;
+    height: 3px;
+    background: var(--primary);
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    transition: 0.3s;
+}
+
+.nav-links a:hover::after {
+    width: 100%;
+}
+
+/* ============================= */
+/* HERO */
+/* ============================= */
+.hero-content h1 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+    animation: fadeInDown 1.2s ease-in-out;
+}
+
+.hero-content p {
+    animation: fadeInUp 1.2s ease-in-out;
+}
+
+/* ============================= */
+/* BOTONES */
+/* ============================= */
+.btn-primary {
+    background: var(--gradient);
+    color: var(--dark);
+    padding: 14px 30px;
+    border-radius: 50px;
+    font-weight: 600;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    background: var(--primary-dark);
+}
+
+/* ============================= */
+/* SECCIONES */
+/* ============================= */
+.section {
+    padding: 80px 20px;
+}
+
+.section h2 {
+    font-size: 2.4rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.section h2::after {
+    content: "";
+    width: 60px;
+    height: 4px;
+    background: var(--gradient);
+    display: block;
+    margin: 10px auto;
+    border-radius: 5px;
+}
+
+/* ============================= */
+/* TARJETAS */
+/* ============================= */
+.card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: none;
+    transition: all 0.4s ease;
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Tarjetas amarillas */
+.card-yellow {
+    border-top: 5px solid var(--secondary);
+}
+
+/* ============================= */
+/* FONDOS */
+/* ============================= */
+.bg-light {
+    background: var(--light);
+}
+
+.bg-yellow {
+    background: var(--gradient);
+    color: var(--dark);
+}
+
+/* ============================= */
+/* CTA */
+/* ============================= */
+.cta-yellow {
+    background: var(--gradient);
+    color: var(--dark);
+    border-radius: 0;
+}
+
+/* ============================= */
+/* FOOTER */
+/* ============================= */
+.site-footer {
+    background: #1f1f1f;
+    color: #ffffff;
+    padding: 30px 20px;
+    text-align: center;
+}
+
+.site-footer p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* ============================= */
+/* ANIMACIONES */
+/* ============================= */
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================= */
+/* RESPONSIVE */
+/* ============================= */
+@media (max-width: 768px) {
+    .hero-content h1 {
+        font-size: 2.2rem;
+    }
+
+    .section h2 {
+        font-size: 1.8rem;
+    }
+
+    .hero-video {
+        height: 75vh;
+    }
 }
