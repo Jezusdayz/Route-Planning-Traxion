@@ -47,6 +47,8 @@ class InicioViajeResponse(BaseModel):
     resumen_cotizacion: ResumenCotizacion
     planeacion: dict | None = None
     validaciones: dict | None = None
+    supuestos: dict | None = None
+    costeo: dict | None = None
     ws_url: str
 
 
@@ -133,6 +135,8 @@ async def iniciar_viaje(request: InicioViajeRequest, db=Depends(get_db)):
     # 8. Planeación operativa + validación de viabilidad
     planeacion_result = None
     validaciones_result = None
+    supuestos_result = None
+    costeo_result = None
     try:
         mision = await calcular_mision(
             token=token,
@@ -144,6 +148,8 @@ async def iniciar_viaje(request: InicioViajeRequest, db=Depends(get_db)):
         )
         planeacion_result = mision["planeacion"]
         validaciones_result = mision["validaciones"]
+        supuestos_result = mision["supuestos"]
+        costeo_result = mision["costeo"]
     except ValueError as e:
         _validation_error(str(e))
 
@@ -165,5 +171,7 @@ async def iniciar_viaje(request: InicioViajeRequest, db=Depends(get_db)):
         resumen_cotizacion=resumen,
         planeacion=planeacion_result,
         validaciones=validaciones_result,
+        supuestos=supuestos_result,
+        costeo=costeo_result,
         ws_url=f"ws://localhost:8000/chat/{token}",
     )
