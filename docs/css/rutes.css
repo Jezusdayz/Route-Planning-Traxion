@@ -258,3 +258,58 @@ button:hover {
     font-size: 12px;
   }
 }
+/* TARJETAS */
+/* ============================= */
+.card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: none;
+    transition: all 0.4s ease;
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Tarjetas amarillas */
+.card-yellow {
+    border-top: 5px solid var(--secondary);
+}
+
+/* ============================= */
+/* FONDOS */
+/* ============================= */
+.bg-light {
+    background: var(--light);
+}
+
+.bg-yellow {
+    background: var(--gradient);
+    color: var(--dark);
+}
+
+/* ============================= */
+/* CTA */
+/* ============================= */
+.cta-yellow {
+    background: var(--gradient);
+    color: var(--dark);
+    border-radius: 0;
+}
+
+/* ============================= */
+/* FOOTER */
+/* ============================= */
+.site-footer {
+    background: #1f1f1f;
+    color: #ffffff;
+    padding: 30px 20px;
+    text-align: center;
+}
+
+.site-footer p {
+    margin: 0;
+    font-size: 0.9rem;
+}
