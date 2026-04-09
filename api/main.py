@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.config import settings
 from api.database import get_db, lifespan
+from api.routers import chat, quotation
 
 app = FastAPI(title="Route Planning API", lifespan=lifespan)
 
@@ -13,6 +14,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(quotation.router)
+app.include_router(chat.router)
 
 
 @app.get("/")
