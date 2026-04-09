@@ -4,6 +4,7 @@ body{
     line-height: 1.6;
     background-color: white;
     color: rgb(83, 86, 90);
+    list-style: none;
 }
 
 /*Barra de navegacion*/
@@ -194,4 +195,239 @@ footer {
     flex-direction: column;
     align-items: center;
     gap:15px;
+}
+
+/* ============================= */
+/* HERO SECTION */
+/* ============================= */
+.hero {
+    background: linear-gradient(rgba(0, 0, 0, 0.65),
+                                rgba(0, 0, 0, 0.65)),
+                url('../img/camiones.jpg') center/cover no-repeat;
+    color: white;
+    text-align: center;
+    padding: 120px 20px;
+}
+
+.hero-content {
+    max-width: 900px;
+    margin: auto;
+}
+
+.hero h1 {
+    font-size: 2.8rem;
+    margin-bottom: 20px;
+}
+
+.hero p {
+    font-size: 1.2rem;
+    margin-bottom: 25px;
+}
+
+/* Botón principal */
+.btn-primary {
+    background-color: rgb(208, 223, 0);
+    color: rgb(83, 86, 90);
+    padding: 12px 25px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: scale(1.05);
+    background-color: rgb(190, 205, 0);
+}
+
+/* ============================= */
+/* SECCIONES */
+/* ============================= */
+.section {
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.section h2 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
+
+.bg-light {
+    background-color: rgb(240, 240, 240);
+}
+
+/* ============================= */
+/* TARJETAS */
+/* ============================= */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    max-width: 1100px;
+    margin: auto;
+}
+
+.card {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid rgb(83, 86, 90);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* ============================= */
+/* RESPONSIVE */
+/* ============================= */
+@media (max-width: 768px) {
+    .hero h1 {
+        font-size: 2rem;
+    }
+
+    .hero p {
+        font-size: 1rem;
+    }
+}
+
+/* ============================= */
+/* HERO CON VIDEO DE FONDO */
+/* ============================= */
+.hero-video {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: #ffffff;
+}
+
+/* Video de fondo */
+.video-bg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    transform: translate(-50%, -50%);
+    object-fit: cover;
+    z-index: -2;
+}
+
+/* Capa oscura para contraste */
+.video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.627);
+    z-index: -1;
+}
+
+/* Contenido del Hero */
+.hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    padding: 20px;
+}
+
+.hero-content h1 {
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
+
+.hero-content p {
+    font-size: 1.2rem;
+    margin-bottom: 25px;
+}
+
+/* Botón principal */
+.btn-primary {
+    background-color: rgb(208, 223, 0);
+    color: rgb(83, 86, 90);
+    padding: 12px 25px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: scale(1.05);
+    background-color: rgb(190, 205, 0);
+}
+
+/* ============================= */
+/* DISEÑO RESPONSIVO */
+/* ============================= */
+@media (max-width: 768px) {
+    .hero-video {
+        height: 70vh;
+    }
+
+    .hero-content h1 {
+        font-size: 2rem;
+    }
+
+    .hero-content p {
+        font-size: 1rem;
+    }
+}
+
+/* ============================= */
+/* SECCIONES AMARILLAS */
+/* ============================= */
+.bg-yellow {
+    background-color: rgb(208, 223, 0);
+    color: rgb(83, 86, 90);
+}
+
+.bg-yellow h2 {
+    margin-bottom: 15px;
+}
+
+.bg-yellow p {
+    max-width: 900px;
+    margin: 0 auto 25px auto;
+}
+
+/* Tarjetas en fondo amarillo */
+.card-yellow {
+    background-color: #ffffff;
+    border: 2px solid rgb(83, 86, 90);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Sección CTA */
+.cta-yellow {
+    background-color: rgb(208, 223, 0);
+    color: rgb(83, 86, 90);
+    text-align: center;
+    padding: 70px 20px;
+}
+
+.cta-yellow h2 {
+    font-size: 2.2rem;
+    margin-bottom: 15px;
+}
+
+.cta-yellow p {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
+
+/* Ajuste del botón en CTA */
+.cta-yellow .btn-primary {
+    background-color: rgb(83, 86, 90);
+    color: #ffffff;
+}
+
+.cta-yellow .btn-primary:hover {
+    background-color: #333333;
 }

@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TraxIA - Routes</title>
-    
+
     <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
-    
+
     <link rel="stylesheet" href="css/rutes.css">
 </head>
 
@@ -17,47 +18,52 @@
     <main class="container">
         <section class="flex-wrapper">
             <article class="contenedor">
-    <h2>Asistente Tracy</h2>
-    <div id="agent-wrapper" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
-        
-        <div id="setup-form" style="padding: 10px;"> <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Configura los parámetros del servicio:</p>
-    <div class="form-group">
-        <input type="text" id="route-origin" placeholder="Origen de la ruta">
-        <input type="text" id="route-dest" placeholder="Destino de la ruta">
-        
-        <div class="form-row">
-            <input type="number" id="passengers" placeholder="Pasajeros">
-            <select id="service-level">
-                <option value="" disabled selected>Nivel de servicio</option>
-                <option value="economico">Económico</option>
-                <option value="empresarial">Empresarial</option>
-                <option value="ejecutivo">Ejecutivo</option>
-            </select>
-        </div>
+                <h2>Asistente Tracy</h2>
+                <div id="agent-wrapper" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
 
-        <div class="form-row">
-            <input type="date" id="service-date">
-            <input type="time" id="service-time">
-        </div>
-    </div>
-    <button id="start-chat-btn" onclick="startAgent()">Iniciar Tracy</button>
-</div>
+                    <div id="setup-form" style="padding: 10px;">
+                        <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Configura los parámetros del
+                            servicio:</p>
+                        <div class="form-group">
+                            <input type="text" id="route-origin" placeholder="Origen de la ruta">
+                            <input type="text" id="route-dest" placeholder="Destino de la ruta">
 
-        <div id="chat-container" style="display: none; flex: 1; flex-direction: column; background: white;">
-            <div id="chat-window" style="flex: 1; overflow-y: auto; padding: 10px;">
-                <div class="bot-msg">
-                    <strong>Tracy:</strong> ¡Listo! He registrado el servicio. ¿Deseas optimizar la ruta o revisar el manifiesto?
+                            <div class="form-row">
+                                <input type="number" id="passengers" placeholder="Pasajeros">
+                                <select id="service-level">
+                                    <option value="" disabled selected>Nivel de servicio</option>
+                                    <option value="economico">Económico</option>
+                                    <option value="empresarial">Empresarial</option>
+                                    <option value="ejecutivo">Ejecutivo</option>
+                                </select>
+                            </div>
+
+                            <div class="form-row">
+                                <input type="date" id="service-date">
+                                <input type="time" id="service-time">
+                            </div>
+                        </div>
+                        <button id="start-chat-btn" onclick="startAgent()">Iniciar Tracy</button>
+                    </div>
+
+                    <div id="chat-container" style="display: none; flex: 1; flex-direction: column; background: white;">
+                        <div id="chat-window" style="flex: 1; overflow-y: auto; padding: 10px;">
+                            <div class="bot-msg">
+                                <strong>Tracy:</strong> ¡Listo! He registrado el servicio. ¿Deseas optimizar la ruta o
+                                revisar el manifiesto?
+                            </div>
+                        </div>
+                        <div class="chat-input-area" style="display: flex; border-top: 1px solid #eee; padding: 5px;">
+                            <input type="text" id="user-input" placeholder="Escribe un mensaje..."
+                                style="flex: 1; border: none; padding: 8px;">
+                            <button id="send-btn" onclick="sendMessage()"
+                                style="padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 4px;">Enviar</button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="chat-input-area" style="display: flex; border-top: 1px solid #eee; padding: 5px;">
-                <input type="text" id="user-input" placeholder="Escribe un mensaje..." style="flex: 1; border: none; padding: 8px;">
-                <button id="send-btn" onclick="sendMessage()" style="padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 4px;">Enviar</button>
-            </div>
-        </div>
-    </div>
-</article>
+            </article>
 
-            
+
             <article class="contenedor">
                 <h2>Mapa de rutas</h2>
                 <div id="mapa" class="mapa-interactivo"></div>
@@ -113,7 +119,8 @@
         </div>
     </footer>
 
-    <script src="js/script.js"></script> 
+    <script src="js/script.js"></script>
     <script src="js/navbar.js"></script>
 </body>
+
 </html>

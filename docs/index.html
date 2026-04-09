@@ -1,37 +1,282 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TraxIA</title>
     <link rel="stylesheet" href="css/index.css">
+
     <!-- Favicon -->
     <link rel="icon" href="img/icono.png" type="image/png" sizes="32x32">
 </head>
 
 <body id="distribucion-principal">
 
-    <!-- El navbar se llama en todos ema -->
+    <!-- Navbar dinámico -->
     <div id="navbar"></div>
 
+    <!-- Contenido principal -->
     <main>
-        <h1>Bienvenido a TraxIA</h1>
+
+
+        <!-- Hero con video de fondo -->
+        <section class="hero-video" id="inicio">
+            <video autoplay muted loop playsinline class="video-bg">
+                <source src="multimedia/Camion.mp4" type="video/mp4">
+                Tu navegador no soporta videos en HTML5.
+            </video>
+
+            <!-- Capa oscura para mejorar la legibilidad -->
+            <div class="video-overlay"></div>
+
+            <!-- Contenido -->
+            <div class="hero-content">
+                <h1>Optimización Inteligente de Rutas para Axion</h1>
+                <p>
+                    TraxIA utiliza un agente inteligente para optimizar rutas de camiones,
+                    reduciendo costos, tiempos de traslado y consumo de combustible.
+                </p>
+                <a href="#proyecto" class="btn-primary">Conocer más</a>
+            </div>
+        </section>
+
+        <!-- Sección del Proyecto -->
+        <section class="section" id="proyecto">
+            <h2>Sobre el Proyecto</h2>
+            <p>
+                <strong>TraxIA</strong> es una solución tecnológica diseñada para optimizar la
+                planificación de rutas de camiones en la distribución de combustible para Axion.
+                Mediante el uso de algoritmos avanzados y un agente inteligente, el sistema analiza
+                variables clave como distancia, tráfico, consumo de combustible y tiempos de entrega
+                para generar rutas eficientes y seguras.
+            </p>
+            <p>
+                Esta herramienta permite mejorar la logística del transporte, reducir costos
+                operativos y fortalecer la toma de decisiones estratégicas dentro del sector
+                energético. Además, proporciona visualización de datos en tiempo real a través
+                de mapas interactivos y paneles de control intuitivos.
+            </p>
+
+            <div class="grid">
+                <div class="card">
+                    <h3>🎯 Objetivo General</h3>
+                    <p>
+                        Optimizar la distribución de combustible mediante un sistema inteligente
+                        que mejore la eficiencia operativa y reduzca los tiempos de entrega.
+                    </p>
+                </div>
+                <div class="card">
+                    <h3>📊 Problema a Resolver</h3>
+                    <p>
+                        La planificación manual de rutas genera mayores costos, retrasos e
+                        ineficiencias logísticas que afectan la productividad del transporte.
+                    </p>
+                </div>
+                <div class="card">
+                    <h3>🤖 Solución Propuesta</h3>
+                    <p>
+                        Implementar un agente inteligente capaz de analizar datos en tiempo real
+                        y generar rutas óptimas de manera automatizada.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Llamado a la Acción -->
+<section class="section cta-yellow" id="cta">
+    <h2>Impulsa la Logística con TraxIA</h2>
+    <p>
+        Optimiza las rutas de transporte y mejora la eficiencia operativa con tecnología inteligente.
+    </p>
+    <a href="#contacto" class="btn-primary">Solicitar Información</a>
+</section>
+
+        <!-- Beneficios -->
+        <section class="section bg-light" id="beneficios">
+            <h2>Beneficios</h2>
+            <p>
+                La implementación de TraxIA proporciona ventajas estratégicas que mejoran la
+                eficiencia logística y la competitividad en el sector energético.
+            </p>
+
+            <div class="grid">
+                <div class="card">
+                    <h3>💰 Reducción de Costos</h3>
+                    <p>
+                        Disminuye el consumo de combustible, optimiza los recursos y reduce los
+                        gastos operativos del transporte.
+                    </p>
+                </div>
+                <div class="card">
+                    <h3>⏱️ Optimización de Tiempos</h3>
+                    <p>
+                        Calcula las rutas más rápidas y eficientes, garantizando entregas puntuales.
+                    </p>
+                </div>
+                <div class="card">
+                    <h3>🤖 Agente Inteligente</h3>
+                    <p>
+                        Analiza información en tiempo real para ofrecer soluciones adaptativas y precisas.
+                    </p>
+                </div>
+                <div class="card">
+                    <h3>🌱 Sostenibilidad</h3>
+                    <p>
+                        Reduce la huella de carbono y promueve operaciones más responsables con el medio ambiente.
+                    </p>
+                </div>
+                <div class="card">
+                    <h3>📍 Monitoreo en Tiempo Real</h3>
+                    <p>
+                        Permite visualizar rutas y ubicaciones mediante mapas interactivos.
+                    </p>
+                </div>
+                <div class="card">
+                    <h3>📈 Toma de Decisiones Estratégicas</h3>
+                    <p>
+                        Proporciona datos precisos para mejorar la planificación y gestión logística.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Impacto -->
+<section class="section bg-yellow" id="impacto">
+    <h2>Impacto del Proyecto</h2>
+    <p>
+        La implementación de TraxIA contribuye a la modernización del sector energético
+        mediante la automatización y optimización de procesos logísticos.
+    </p>
+
+    <div class="grid">
+        <div class="card card-yellow">
+            <h3>📉 30% Menos Costos</h3>
+            <p>Optimización del consumo de combustible y recursos operativos.</p>
+        </div>
+        <div class="card card-yellow">
+            <h3>⏱️ 40% Más Eficiencia</h3>
+            <p>Reducción significativa en los tiempos de entrega.</p>
+        </div>
+        <div class="card card-yellow">
+            <h3>🌱 Transporte Sostenible</h3>
+            <p>Disminución de emisiones contaminantes.</p>
+        </div>
+        <div class="card card-yellow">
+            <h3>📈 Mayor Productividad</h3>
+            <p>Mejora en la planificación y gestión logística.</p>
+        </div>
+    </div>
+</section>
+
+        <!-- Tecnologías -->
+        <section class="section" id="tecnologia">
+            <h2>Tecnologías Utilizadas</h2>
+            <p>
+                TraxIA integra herramientas modernas de desarrollo y análisis para garantizar
+                un sistema eficiente, escalable y confiable.
+            </p>
+
+            <div class="grid">
+                <div class="card">
+                    <h3>🧠 Inteligencia Artificial</h3>
+                    <p>Optimiza rutas mediante el análisis inteligente de datos.</p>
+                </div>
+                <div class="card">
+                    <h3>📐 Algoritmos de Optimización</h3>
+                    <p>Implementación de soluciones basadas en grafos y heurísticas avanzadas.</p>
+                </div>
+                <div class="card">
+                    <h3>💻 C# y Python</h3>
+                    <p>Lenguajes utilizados para el desarrollo del sistema y el análisis de datos.</p>
+                </div>
+                <div class="card">
+                    <h3>🗄️ SQLite</h3>
+                    <p>Gestión eficiente de la base de datos del sistema.</p>
+                </div>
+                <div class="card">
+                    <h3>🗺️ Leaflet y OpenStreetMap</h3>
+                    <p>Visualización de rutas mediante mapas interactivos.</p>
+                </div>
+                <div class="card">
+                    <h3>🌐 HTML, CSS y JavaScript</h3>
+                    <p>Desarrollo de la interfaz web moderna e intuitiva.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Características -->
+<section class="section bg-yellow" id="caracteristicas">
+    <h2>Características del Sistema</h2>
+    <p>
+        TraxIA integra herramientas avanzadas para optimizar la planificación de rutas
+        y mejorar la eficiencia logística en la distribución de combustible.
+    </p>
+
+    <div class="grid">
+        <div class="card card-yellow">
+            <h3>📍 Ruteo Inteligente</h3>
+            <p>Calcula las rutas más eficientes considerando distancia, tráfico y costos.</p>
+        </div>
+        <div class="card card-yellow">
+            <h3>📊 Análisis en Tiempo Real</h3>
+            <p>Procesa datos dinámicos para optimizar la toma de decisiones.</p>
+        </div>
+        <div class="card card-yellow">
+            <h3>🗺️ Mapas Interactivos</h3>
+            <p>Visualiza rutas mediante Leaflet y OpenStreetMap.</p>
+        </div>
+        <div class="card card-yellow">
+            <h3>🔐 Gestión de Datos</h3>
+            <p>Administra información de forma segura mediante bases de datos SQLite.</p>
+        </div>
+    </div>
+</section>
+
+        <!-- Contacto -->
+        <section class="section bg-light" id="contacto">
+            <h2>Contacto</h2>
+            <p>
+                ¿Interesado en implementar esta solución para optimizar la logística de transporte?
+                Ponte en contacto con nuestro equipo para obtener más información.
+            </p>
+
+            <div class="grid">
+                <div class="card">
+                    <h3>📧 Correo Electrónico</h3>
+                    <p>contacto@traxia.com</p>
+                </div>
+                <div class="card">
+                    <h3>🏢 Organización</h3>
+                    <p>Equipo Gamma</p>
+                </div>
+                <div class="card">
+                    <h3>📍 Ubicación</h3>
+                    <p>México</p>
+                </div>
+            </div>
+
+            <br>
+            <a href="mailto:contacto@traxia.com" class="btn-primary">
+                Enviar Correo
+            </a>
+        </section>
+
     </main>
 
-    
+    <!-- Encabezado original -->
+    <header class="site-header">
+        <h1 id="main-title">Bienvenido</h1>
+    </header>
 
-<header class="site-header">
-<h1 id="main-title">Bienvenido</h1>
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="footer-content">
+            <p>&copy; 2026 Equipo Gamma</p>
+        </div>
+    </footer>
 
-</header>
-
-<footer class="site-footer">
-    <div class="footer-content">
-        <p>&copy; 2026 Equipo Gamma</p>
-    </div>
-
-</footer>    
-
+    <!-- Script del Navbar -->
     <script src="js/navbar.js"></script>
 
 </body>
