@@ -7,15 +7,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from api.database import get_db
-from api.models.costos import CostosOperativos
 from api.models.nivel_servicio import NivelServicio
-from api.models.vehiculo import Vehiculo
 from api.services.auth import generate_token
 from api.services.geocoding import geocode_ciudad
 from api.services.planner import calcular_mision
-from api.services.quotation import cotizar_servicio
 from api.services.routing import calcular_ruta
-from api.services.session_manager import create_session
+from api.services.session_manager import create_session, update_seccion
 
 router = APIRouter(prefix="/cotizar", tags=["cotización"])
 
@@ -29,23 +26,12 @@ class InicioViajeRequest(BaseModel):
     hora_salida: time
 
 
-class ResumenCotizacion(BaseModel):
-    origen: str
-    destino: str
-    distancia_km: float
-    tiempo_h: float
-    nivel_servicio: str
-    vehiculo_id: str
-    desglose: dict
-    subtotal: float
-    total: float
-
-
 class InicioViajeResponse(BaseModel):
     status: str
     token: str
-    resumen_cotizacion: ResumenCotizacion
+    normalizacion: dict | None = None
     planeacion: dict | None = None
+    operacion: dict | None = None
     validaciones: dict | None = None
     supuestos: dict | None = None
     costeo: dict | None = None
@@ -97,46 +83,31 @@ async def iniciar_viaje(request: InicioViajeRequest, db=Depends(get_db)):
         )
     nivel = NivelServicio.model_validate(nivel_doc)
 
-    # 4. Seleccionar vehículo disponible que cumpla requisitos del nivel
-    vehiculo_doc = await db["vehiculos"].find_one({
-        "estado": "activo",
-        "capacidad.pasajeros": {"$gte": max(request.pasajeros, nivel.requisitos.capacidad_minima)},
-    })
-    if vehiculo_doc is None:
-        _validation_error(
-            f"No hay vehículos disponibles para {request.pasajeros} pasajeros "
-            f"con nivel {request.nivel_servicio!r}."
-        )
-    vehiculo = Vehiculo.model_validate(vehiculo_doc)
-
-    # 5. Costos operativos (usar primer registro disponible)
-    costos_doc = await db["costos_variables"].find_one({})
-    if costos_doc is None:
-        _validation_error("No se encontraron costos operativos en el catálogo.")
-    costos = CostosOperativos.model_validate(costos_doc)
-
-    # 6. Cotización
-    resultado = cotizar_servicio(vehiculo, costos, nivel, ruta["distancia_km"], ruta["tiempo_h"])
-
-    # 7. Crear sesión y token
+    # 4. Crear sesión con input_usuario
     token = generate_token()
-    await create_session(token, {
-        "origen": request.origen,
-        "destino": request.destino,
+    input_usuario = {
+        "origen_texto": request.origen,
+        "destino_texto": request.destino,
         "pasajeros": request.pasajeros,
         "nivel_servicio": request.nivel_servicio,
         "fecha_servicio": request.fecha_servicio.isoformat(),
         "hora_salida": request.hora_salida.isoformat(),
-        "distancia_km": ruta["distancia_km"],
-        "tiempo_h": ruta["tiempo_h"],
-        "cotizacion": resultado,
-    }, db)
+    }
+    await create_session(token, input_usuario, db)
 
-    # 8. Planeación operativa + validación de viabilidad
+    # 5. Persistir sección normalizacion
+    normalizacion = {
+        "origen": {"ciudad": request.origen, "lat": coords_origen["lat"], "lon": coords_origen["lon"]},
+        "destino": {"ciudad": request.destino, "lat": coords_destino["lat"], "lon": coords_destino["lon"]},
+    }
+    await update_seccion(token, "normalizacion", normalizacion, db)
+
+    # 6. Planeación operativa + validación + costeo (persiste sus secciones internamente)
     planeacion_result = None
     validaciones_result = None
     supuestos_result = None
     costeo_result = None
+    operacion_result = None
     try:
         mision = await calcular_mision(
             token=token,
@@ -147,29 +118,19 @@ async def iniciar_viaje(request: InicioViajeRequest, db=Depends(get_db)):
             db=db,
         )
         planeacion_result = mision["planeacion"]
+        operacion_result = mision["operacion"]
         validaciones_result = mision["validaciones"]
         supuestos_result = mision["supuestos"]
         costeo_result = mision["costeo"]
     except ValueError as e:
         _validation_error(str(e))
 
-    resumen = ResumenCotizacion(
-        origen=request.origen,
-        destino=request.destino,
-        distancia_km=ruta["distancia_km"],
-        tiempo_h=ruta["tiempo_h"],
-        nivel_servicio=nivel.nombre,
-        vehiculo_id=vehiculo.id,
-        desglose=resultado["desglose"],
-        subtotal=resultado["subtotal"],
-        total=resultado["total"],
-    )
-
     return InicioViajeResponse(
         status="success",
         token=token,
-        resumen_cotizacion=resumen,
+        normalizacion=normalizacion,
         planeacion=planeacion_result,
+        operacion=operacion_result,
         validaciones=validaciones_result,
         supuestos=supuestos_result,
         costeo=costeo_result,
