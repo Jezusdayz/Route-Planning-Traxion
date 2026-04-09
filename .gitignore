@@ -1,0 +1,10 @@
+# Virtual environment
+.venv/
+
+# Environment variables (local secrets)
+api/.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
