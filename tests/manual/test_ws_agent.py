@@ -409,7 +409,7 @@ async def t07_consulta_sin_cambio(delay: int):
 
 
 async def t08_historial_mongodb(token: str):
-    """T08: Después de múltiples turnos, historial tiene entradas en MongoDB."""
+    """T08: El historial captura bienvenida, mensajes de usuario y errores."""
     name = "T08 — Historial de auditoría en MongoDB"
     try:
         sesion = get_sesion_mongo(token)
@@ -418,16 +418,22 @@ async def t08_historial_mongodb(token: str):
         assert len(historial) > 0, "historial vacío en MongoDB"
 
         roles = [e.get("role") for e in historial]
-        assert "user" in roles,  "No hay entradas role=user en historial"
-        assert "tracy" in roles, "No hay entradas role=tracy en historial"
+        tipos = [e.get("tipo") for e in historial]
 
-        # Verificar estructura de cada entrada
+        assert "user" in roles,  "No hay entradas role=user en historial"
+        assert "tracy" in roles, "No hay entradas role=tracy (bienvenida o respuesta)"
+        assert "bienvenida" in tipos, "No hay entrada tipo=bienvenida en historial"
+
         for i, entry in enumerate(historial):
             assert "role" in entry,      f"entry[{i}] sin 'role'"
+            assert "tipo" in entry,      f"entry[{i}] sin 'tipo'"
             assert "mensaje" in entry,   f"entry[{i}] sin 'mensaje'"
             assert "timestamp" in entry, f"entry[{i}] sin 'timestamp'"
+            assert entry["role"] in ("user", "tracy", "sistema"), \
+                f"entry[{i}] role inválido: {entry['role']}"
 
-        ok(name, f"{len(historial)} entradas | roles={set(roles)}")
+        errores = [e for e in historial if e.get("tipo") == "error"]
+        ok(name, f"{len(historial)} entradas | roles={set(roles)} | errores={len(errores)}")
     except AssertionError as e:
         fail(name, str(e))
     except Exception as e:
@@ -567,19 +573,23 @@ async def main(delay: int, skip_ai: bool):
             "T03" in r.name and "WARN" in (r.detail or "")
             for r in results
         )
-        if token_t03 and not t03_rate_limited:
+        # T08 ahora puede correr siempre: la bienvenida y los errores
+        # se persisten en historial aunque no haya respuesta de IA completa.
+        if token_t03:
             await t08_historial_mongodb(token_t03)
+        else:
+            fail("T08 — Historial de auditoría en MongoDB", "T03 no retornó token")
+
+        # T09 y T10 siguen requiriendo el ciclo completo de IA (explicacion, resultado)
+        if token_t03 and not t03_rate_limited:
             await t09_explicacion_mongodb(token_t03)
             await t10_gran_json_completo(token_t03)
         elif t03_rate_limited:
-            warn("T08 — Historial de auditoría en MongoDB",
-                 "T03 rate-limited — sin datos Gemini en BD (infraestructura, no bug del agente)")
             warn("T09 — Sección 'explicacion' persistida",
                  "T03 rate-limited — sin datos Gemini en BD (infraestructura, no bug del agente)")
             warn("T10 — Gran JSON completo en MongoDB",
                  "T03 rate-limited — sin datos Gemini en BD (infraestructura, no bug del agente)")
         else:
-            fail("T08 — Historial de auditoría en MongoDB", "T03 no retornó token")
             fail("T09 — Sección 'explicacion' persistida", "T03 no retornó token")
             fail("T10 — Gran JSON completo en MongoDB", "T03 no retornó token")
 

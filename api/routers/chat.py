@@ -67,6 +67,14 @@ async def chat_viaje(websocket: WebSocket, token: str):
     }
     await _send(websocket, bienvenida)
 
+    # Registrar bienvenida en historial de auditoría
+    await append_historial(db=db, token=token, entry={
+        "role": "tracy",
+        "tipo": "bienvenida",
+        "mensaje": bienvenida["mensaje"],
+        "timestamp": _ts(),
+    })
+
     try:
         while True:
             mensaje = await websocket.receive_text()
@@ -74,6 +82,7 @@ async def chat_viaje(websocket: WebSocket, token: str):
             # Registrar mensaje del usuario en historial de auditoría
             await append_historial(db=db, token=token, entry={
                 "role": "user",
+                "tipo": "mensaje",
                 "mensaje": mensaje,
                 "timestamp": _ts(),
             })
@@ -86,22 +95,32 @@ async def chat_viaje(websocket: WebSocket, token: str):
             except Exception as exc:
                 logger.warning("Error en gatekeeper: %s", exc)
                 await _thinking(websocket, "gatekeeper", False)
-                await _send(websocket, {
+                msg_error = f"No pude procesar tu solicitud en este momento: {exc}"
+                await _send(websocket, {"tipo": "error", "mensaje": msg_error})
+                await append_historial(db=db, token=token, entry={
+                    "role": "sistema",
                     "tipo": "error",
-                    "mensaje": f"No pude procesar tu solicitud en este momento: {exc}",
+                    "fase": "gatekeeper",
+                    "mensaje": msg_error,
+                    "timestamp": _ts(),
                 })
                 continue
             await _thinking(websocket, "gatekeeper", False)
 
             if not gate.entendido:
-                await _send(websocket, {
+                msg_no_entendido = (
+                    "No pude interpretar tu solicitud. "
+                    "¿Puedes reformularla de otra manera? "
+                    "Por ejemplo: 'quiero cambiar el destino a Puebla' o "
+                    "'necesito 45 pasajeros'."
+                )
+                await _send(websocket, {"tipo": "error", "mensaje": msg_no_entendido})
+                await append_historial(db=db, token=token, entry={
+                    "role": "sistema",
                     "tipo": "error",
-                    "mensaje": (
-                        "No pude interpretar tu solicitud. "
-                        "¿Puedes reformularla de otra manera? "
-                        "Por ejemplo: 'quiero cambiar el destino a Puebla' o "
-                        "'necesito 45 pasajeros'."
-                    ),
+                    "fase": "gatekeeper",
+                    "mensaje": msg_no_entendido,
+                    "timestamp": _ts(),
                 })
                 continue
 
@@ -119,9 +138,14 @@ async def chat_viaje(websocket: WebSocket, token: str):
                 except Exception as exc:
                     logger.warning("Error en re-cálculo: %s", exc)
                     await _thinking(websocket, "recalculo", False)
-                    await _send(websocket, {
+                    msg_recalc = f"No pude recalcular el viaje: {exc}"
+                    await _send(websocket, {"tipo": "error", "mensaje": msg_recalc})
+                    await append_historial(db=db, token=token, entry={
+                        "role": "sistema",
                         "tipo": "error",
-                        "mensaje": f"No pude recalcular el viaje: {exc}",
+                        "fase": "recalculo",
+                        "mensaje": msg_recalc,
+                        "timestamp": _ts(),
                     })
                     continue
                 await _thinking(websocket, "recalculo", False)
@@ -183,6 +207,7 @@ async def chat_viaje(websocket: WebSocket, token: str):
             # Registrar respuesta de Tracy en historial de auditoría
             await append_historial(db=db, token=token, entry={
                 "role": "tracy",
+                "tipo": "respuesta",
                 "mensaje": respuesta_datos.get("mensaje_usuario", ""),
                 "timestamp": _ts(),
             })
