@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from api.config import settings
+from api.models.ciudad import Ciudad
 from api.models.costos import CostosFijos, CostosOperativos
 from api.models.nivel_servicio import NivelServicio
 from api.models.seguridad import SeguridadOperativa
@@ -116,6 +117,13 @@ SEGURIDAD_DATA = [
     }
 ]
 
+CIUDADES_DATA = [
+    {"nombre": "cdmx", "lat": 19.4326, "lon": -99.1332, "pais": "México"},
+    {"nombre": "pachuca", "lat": 20.1011, "lon": -98.7591, "pais": "México"},
+    {"nombre": "queretaro", "lat": 20.5888, "lon": -100.3899, "pais": "México"},
+    {"nombre": "puebla", "lat": 19.0414, "lon": -98.2063, "pais": "México"},
+]
+
 
 async def seed_vehiculos(db) -> None:
     docs = [Vehiculo(**d).model_dump(by_alias=True) for d in VEHICULOS_DATA]
@@ -147,6 +155,12 @@ async def seed_seguridad(db) -> None:
     print(f"  seguridad: {len(docs)} documento(s) insertado(s).")
 
 
+async def seed_ciudades(db) -> None:
+    docs = [Ciudad(**d).model_dump(by_alias=True, exclude_none=True) for d in CIUDADES_DATA]
+    await db["ciudades"].insert_many(docs)
+    print(f"  ciudades: {len(docs)} documento(s) insertado(s).")
+
+
 async def seed_data():
     client = AsyncIOMotorClient(settings.mongodb_url)
     db = client[settings.mongodb_db_name]
@@ -168,6 +182,7 @@ async def seed_data():
     await seed_costos_fijos(db)
     await seed_niveles_servicio(db)
     await seed_seguridad(db)
+    await seed_ciudades(db)
 
     print("Seed completado exitosamente.")
     client.close()
