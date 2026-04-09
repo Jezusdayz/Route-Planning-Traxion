@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TraxIA - Routes</title>
+    
+    <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
+    
+    <link rel="stylesheet" href="./css/rutes.css">
+</head>
+
+<body id="distribucion-principal">
+    <nav class="navbar-sticky">
+        
+        <div class="nav-container">
+            <a href="index.html" class="logo">TraxIA</a>
+            <ul class="nav-links">
+                <li><a href="index.html" class="active">Inicio</a></li>
+                <li><a href="rutes.html">Ruteador</a></li>
+            </ul>
+        </div> 
+    </nav>
+
+  
+
+    <main class="container">
+        <section class="flex-wrapper">
+           <article class="contenedor">
+    <h2>Asistente</h2>
+    <div id="chat-container">
+        <div id="chat-window">
+            <div class="bot-msg">
+                <strong>Tracy:</strong> Hola, soy tu asistente Tracy. ¿Qué ruta vamos a recorrer hoy?
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="user-input" placeholder="Escribe un mensaje...">
+            <button id="send-btn" onclick="sendMessage()">Enviar</button>
+        </div>
+    </div>
+</article>
+            
+            <article class="contenedor">
+                <h2>Mapa de rutas</h2>
+                <div id="mapa" class="mapa-interactivo"></div>
+            </article>
+
+            <article class="contenedor">
+                <h2>Panel de Monitoreo</h2>
+                <div class="info-placeholder">
+                    <p>Reglas y métricas activas...</p>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <p>&copy; 2026 Equipo Gamma</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script> 
+</body>
+</html>
