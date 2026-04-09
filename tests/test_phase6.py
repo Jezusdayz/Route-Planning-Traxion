@@ -43,6 +43,15 @@ _SEGURIDAD_DOC = {
 }
 
 
+_COSTOS_DOC = {
+    "_id": "costos_std",
+    "combustible": {"precio_litro": 23.5},
+    "operador": {"costo_hora": 250.0},
+    "mantenimiento": {"costo_km": 2.5},
+    "otros": {"peajes_estimados_km": 1.2, "costo_limpieza_servicio": 300.0},
+}
+
+
 def _make_db(vehiculo_doc=_VEHICULO_DOC, seguridad_doc=_SEGURIDAD_DOC):
     db = MagicMock()
 
@@ -53,6 +62,8 @@ def _make_db(vehiculo_doc=_VEHICULO_DOC, seguridad_doc=_SEGURIDAD_DOC):
             col.find_one = AsyncMock(return_value=vehiculo_doc)
         elif name == "seguridad_operativa":
             col.find_one = AsyncMock(return_value=seguridad_doc)
+        elif name == "costos_variables":
+            col.find_one = AsyncMock(return_value=_COSTOS_DOC)
         else:
             col.find_one = AsyncMock(return_value=None)
         return col
