@@ -312,4 +312,28 @@ button:hover {
 .site-footer p {
     margin: 0;
     font-size: 0.9rem;
+    
+}
+
+/* Estructura para fijar el footer abajo */
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* El contenido principal se expande */
+main {
+    flex: 1;
+}
+
+/* Footer */
+.site-footer {
+    text-align: center;
+    padding: 20px;
 }
