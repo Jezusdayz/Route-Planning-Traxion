@@ -687,3 +687,37 @@ body {
         height: 75vh;
     }
 }
+
+/* ============================= */
+/* TARJETAS DE CONTACTO */
+/* ============================= */
+.contact-card {
+    text-align: center;
+    padding: 25px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.contact-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* Imagen de perfil */
+.contact-img {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 15px;
+    border: 4px solid rgb(208, 223, 0);
+}
+
+/* Texto */
+.contact-card h3 {
+    margin: 10px 0 5px;
+}
+
+.contact-card p {
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+}
