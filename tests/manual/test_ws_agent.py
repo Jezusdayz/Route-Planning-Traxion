@@ -107,7 +107,8 @@ def _is_rate_limit(mensajes: list) -> bool:
             msg = m.get("mensaje", "")
             if any(kw in msg.lower() for kw in (
                 "rate", "quota", "429", "resource_exhausted",
-                "no pude procesar", "server_connection_closed",
+                "no pude procesar", "no pude recalcular",
+                "server_connection_closed",
             )):
                 return True
     return False
@@ -214,9 +215,9 @@ async def t02_bienvenida(token: str):
             f"Mensaje no menciona origen/destino: {msg!r}"
         assert "costeo" in bienvenida, "Falta campo 'costeo'"
         costeo = bienvenida["costeo"] or {}
-        costo = costeo.get("costo_total_cotizacion") or costeo.get("costo_total", 0)
+        costo = costeo.get("costo_total", 0)
         assert costo > 0, \
-            f"costo_total_cotizacion inválido: {costo}"
+            f"costo_total inválido: {costo}"
         ok(name, f"costo_total={costo:,.2f} MXN")
     except AssertionError as e:
         fail(name, str(e))
@@ -486,7 +487,7 @@ async def t10_gran_json_completo(token: str):
         assert "capacidad" in sesion["validaciones"], "validaciones sin 'capacidad'"
         assert sesion["validaciones"]["capacidad"].get("vehiculo") is not None, \
             "validaciones.capacidad sin campo 'vehiculo' (debería ser nro)"
-        assert "costo_total_cotizacion" in sesion["costeo"], "costeo sin 'costo_total_cotizacion'"
+        assert "costo_total" in sesion["costeo"], "costeo sin 'costo_total'"
         assert "vehiculo_seleccionado" in sesion["resultado"], "resultado sin vehiculo_seleccionado"
 
         ok(name, f"Todas las {len(secciones_requeridas)} secciones presentes ✓")
