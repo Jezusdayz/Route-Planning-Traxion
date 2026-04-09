@@ -30,7 +30,19 @@ Edita `api/.env` y ajusta los valores:
 MONGODB_URL=mongodb://localhost:27017
 MONGODB_DB_NAME=traxion
 ENVIRONMENT=development
+ORS_API_KEY=your_openrouteservice_api_key_here
+USER_AGENT=route-planning-traxion/1.0
 ```
+
+### Variables de entorno
+
+| Variable | Descripción | Requerida |
+|----------|-------------|-----------|
+| `MONGODB_URL` | URL de conexión a MongoDB | ✅ |
+| `MONGODB_DB_NAME` | Nombre de la base de datos | ✅ |
+| `ENVIRONMENT` | Entorno de ejecución (`development` / `production`) | ✅ |
+| `ORS_API_KEY` | Clave de API para [OpenRouteService](https://openrouteservice.org/) (geocodificación/rutas) | ✅ en producción |
+| `USER_AGENT` | Identificador de la aplicación para requests a Nominatim | ✅ en producción |
 
 > En producción/nube, inyecta las variables directamente en el entorno del sistema — no se usa el archivo `.env`.
 
