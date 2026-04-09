@@ -1,4 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // --- VARIABLES GLOBALES PARA SIMULACIÓN ---
+    let fuelVal = 100;
+    let distanceTraveled = 0;
+    let totalTripDistance = 0; 
+    let viajeActivo = false; // Controla si la telemetría está corriendo
+
     // --- 1. LÓGICA DEL MAPA ---
     const map = new maplibregl.Map({
         container: 'mapa', 
@@ -12,84 +18,130 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- 2. LÓGICA DEL FORMULARIO Y TRACY ---
     window.startAgent = function() {
-        // Referencias a los campos
         const origin = document.getElementById('route-origin').value;
         const dest = document.getElementById('route-dest').value;
-        const passengers = document.getElementById('passengers').value;
+        const passengersTotal = document.getElementById('passengers').value;
         const serviceLevel = document.getElementById('service-level').value;
         const date = document.getElementById('service-date').value;
         const time = document.getElementById('service-time').value;
 
-        // Validación simple
-        if(!origin || !dest || !passengers || !serviceLevel || !date || !time) {
+        if(!origin || !dest || !passengersTotal || !serviceLevel || !date || !time) {
             alert("Por favor completa todos los campos para configurar el servicio.");
             return;
         }
 
-        // Cambiar de interfaz: Ocultar form, mostrar chat
+        // --- CÁLCULOS DINÁMICOS PARA EL PANEL ---
+        totalTripDistance = Math.floor(Math.random() * (45 - 15) + 15);
+        const fuelPrice = 24.20; 
+        const efficiency = 7; 
+        const estimatedFuelCost = (totalTripDistance / efficiency) * fuelPrice;
+        const tollCost = totalTripDistance > 30 ? 148 : 0; 
+        const currentPassengers = Math.max(0, parseInt(passengersTotal) - 1);
+
+        // Actualizar el DOM del Panel de Monitoreo
+        document.getElementById('calc-dist').innerText = `${totalTripDistance} km`;
+        document.getElementById('calc-fuel-cost').innerText = `$${estimatedFuelCost.toFixed(2)}`;
+        document.getElementById('calc-toll').innerText = `$${tollCost}`;
+        document.getElementById('calc-passengers').innerText = `${currentPassengers}/${passengersTotal}`;
+
+        // Mostrar el botón de Iniciar Viaje y resetear estado
+        const btnViaje = document.getElementById('btn-iniciar-viaje');
+        if(btnViaje) {
+            btnViaje.style.display = 'block';
+            btnViaje.innerText = "Iniciar Viaje";
+            btnViaje.disabled = false;
+            btnViaje.style.background = "rgb(208, 223, 0)";
+        }
+        viajeActivo = false;
+        distanceTraveled = 0;
+        fuelVal = 100;
+
+        // --- CAMBIO DE INTERFAZ ---
         document.getElementById('setup-form').style.display = 'none';
         const chatContainer = document.getElementById('chat-container');
         chatContainer.style.display = 'flex';
 
-        // Saludo inicial personalizado con los datos del form
         const chatWindow = document.getElementById('chat-window');
         chatWindow.innerHTML = `
             <div class="bot-msg">
-                <strong>Tracy:</strong> ¡Configuración exitosa! He programado un servicio <strong>${serviceLevel.toUpperCase()}</strong> 
-                de <strong>${origin}</strong> a <strong>${dest}</strong> para el día ${date} a las ${time} 
-                con ${passengers} pasajeros. ¿En qué más puedo apoyarte?
+                <strong>Tracy:</strong> ¡Configuración exitosa! He proyectado una ruta de 
+                <strong>${origin}</strong> hacia <strong>${dest}</strong> con una distancia de 
+                <strong>${totalTripDistance} km</strong>. 
+                <br><br>
+                El costo estimado de combustible es de <strong>$${estimatedFuelCost.toFixed(2)}</strong> 
+                para el nivel de servicio <strong>${serviceLevel.toUpperCase()}</strong>. 
+                ¿Deseas que procedamos con el despacho de la unidad?
             </div>
         `;
 
-        // --- Lógica Visual del Mapa ---
-        // Coordenadas simuladas para la demo
+        // Marcadores y ruta
         const coordsOrigen = [-99.1332, 19.4326]; 
         const coordsDestino = [-99.1676, 19.4270];
-
-        // Añadir marcadores
         new maplibregl.Marker({ color: "#28a745" }).setLngLat(coordsOrigen).addTo(map);
         new maplibregl.Marker({ color: "#dc3545" }).setLngLat(coordsDestino).addTo(map);
-        
-        // Dibujar la línea azul
         trazarRuta(coordsOrigen, coordsDestino);
-        
-        // Animación de cámara
         map.flyTo({ center: [-99.1500, 19.4300], zoom: 13, essential: true });
     };
 
-    // Función para dibujar la línea de ruta en el mapa
+    // --- NUEVA FUNCIÓN: ACTIVAR TELEMETRÍA ---
+    window.activarTelemetria = function() {
+        viajeActivo = true;
+        const btnViaje = document.getElementById('btn-iniciar-viaje');
+        btnViaje.innerText = "En Trayecto...";
+        btnViaje.style.background = "#eee";
+        btnViaje.disabled = true;
+        
+        const chatWindow = document.getElementById('chat-window');
+        chatWindow.innerHTML += `
+            <div class="bot-msg">
+                <strong>Tracy:</strong> El despacho ha sido autorizado. He iniciado el monitoreo de combustible y progreso para esta unidad. ¡Buen viaje!
+            </div>
+        `;
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    };
+
     function trazarRuta(inicio, fin) {
         const geojson = {
             'type': 'Feature',
-            'geometry': {
-                'type': 'LineString',
-                'coordinates': [inicio, fin]
-            }
+            'geometry': { 'type': 'LineString', 'coordinates': [inicio, fin] }
         };
-
         if (map.getSource('route')) {
             map.getSource('route').setData(geojson);
         } else {
             map.addLayer({
-    'id': 'route',
-    'type': 'line',
-    'source': {
-        'type': 'geojson',
-        'data': geojson
-    },
-    'layout': { 
-        'line-join': 'round', 
-        'line-cap': 'round' 
-    },
-    'paint': {
-        
-        'line-color': 'rgb(208, 223, 0)', 
-        'line-width': 5,
-        'line-opacity': 0.8
-    }
-});
+                'id': 'route',
+                'type': 'line',
+                'source': { 'type': 'geojson', 'data': geojson },
+                'layout': { 'line-join': 'round', 'line-cap': 'round' },
+                'paint': { 'line-color': 'rgb(208, 223, 0)', 'line-width': 5, 'line-opacity': 0.8 }
+            });
         }
     }
+
+    // --- 3. LÓGICA DEL MONITOREO (SIMULACIÓN AUTOMÁTICA) ---
+    function updateMini() {
+        // Solo simular si el viaje fue activado por el botón
+        if (!viajeActivo || totalTripDistance === 0) return;
+
+        const fBar = document.getElementById('fuel-bar');
+        const fText = document.getElementById('fuel-text');
+        const dBar = document.getElementById('dist-bar');
+        const dVal = document.getElementById('dist-val');
+        
+        if(fBar && fText) {
+            fuelVal = Math.max(0, fuelVal - 0.08);
+            fBar.style.width = fuelVal + "%";
+            fText.innerText = Math.round(fuelVal) + "%";
+            if(fuelVal < 20) fBar.style.background = "#dc3545";
+        }
+
+        if(dBar && dVal && distanceTraveled < totalTripDistance) {
+            distanceTraveled += (totalTripDistance / 200); 
+            dVal.innerText = distanceTraveled.toFixed(1);
+            dBar.style.width = ((distanceTraveled / totalTripDistance) * 100) + "%";
+        }
+    }
+    setInterval(updateMini, 1500);
 
     // Lógica del Chat con Gemini
     window.sendMessage = async function() {
@@ -100,7 +152,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!message) return;
 
-        // Mostrar mensaje del usuario
         chatWindow.innerHTML += `<div class="user-msg"><strong>Tú:</strong> ${message}</div>`;
         input.value = '';
         chatWindow.scrollTop = chatWindow.scrollHeight;
@@ -112,45 +163,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({ contents: [{ parts: [{ text: message }] }] })
             });
             const data = await response.json();
-            
-            // Verificación básica de respuesta
             if (data.candidates && data.candidates[0].content.parts[0].text) {
                 const botReply = data.candidates[0].content.parts[0].text;
                 chatWindow.innerHTML += `<div class="bot-msg"><strong>Tracy:</strong> ${botReply}</div>`;
-            } else {
-                throw new Error("Respuesta vacía");
             }
         } catch (error) {
-            chatWindow.innerHTML += `<div class="bot-msg" style="color:red"><strong>Tracy:</strong> Lo siento, tuve un problema de conexión.</div>`;
+            chatWindow.innerHTML += `<div class="bot-msg" style="color:red"><strong>Tracy:</strong> Error de conexión.</div>`;
         }
         chatWindow.scrollTop = chatWindow.scrollHeight;
     };
-
-    // --- 3. LÓGICA DEL MONITOREO (SIMULACIÓN AUTOMÁTICA) ---
-    let fuelVal = 100;
-    let distance = 0;
-    const totalDist = 14.2;
-
-    function updateMini() {
-        const fBar = document.getElementById('fuel-bar');
-        const fText = document.getElementById('fuel-text');
-        const dBar = document.getElementById('dist-bar');
-        const dVal = document.getElementById('dist-val');
-        
-        if(fBar && fText) {
-            fuelVal = Math.max(0, fuelVal - 0.05);
-            fBar.style.width = fuelVal + "%";
-            fText.innerText = Math.round(fuelVal) + "%";
-            // Alerta visual de combustible bajo
-            if(fuelVal < 20) fBar.style.background = "#dc3545";
-        }
-
-        if(dBar && dVal && distance < totalDist) {
-            distance += 0.05;
-            dVal.innerText = distance.toFixed(1);
-            dBar.style.width = ((distance / totalDist) * 100) + "%";
-        }
-    }
-    // Actualiza los indicadores cada 2 segundos
-    setInterval(updateMini, 2000);
 });
