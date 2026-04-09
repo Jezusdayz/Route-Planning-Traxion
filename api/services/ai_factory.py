@@ -58,7 +58,12 @@ async def _openai_chat(
     provider_name: str,
 ) -> ChatResult:
     url = f"{settings.ai_base_url.rstrip('/')}/chat/completions"
-    payload: dict = {"model": model, "messages": messages}
+    payload: dict = {
+        "model": model,
+        "messages": messages,
+        "temperature": 0.2,
+        "top_p": 0.25,
+    }
     if response_format == "json_object":
         payload["response_format"] = {"type": "json_object"}
 
@@ -96,6 +101,8 @@ async def _anthropic_chat(messages: list[dict], model: str) -> ChatResult:
     payload: dict = {
         "model": model,
         "max_tokens": 2048,
+        "temperature": 0.2,
+        "top_p": 0.25,
         "messages": user_messages,
     }
     if system_content:
@@ -129,6 +136,7 @@ async def _anthropic_chat(messages: list[dict], model: str) -> ChatResult:
 async def _gemini_chat(messages: list[dict], model: str, response_format: str | None) -> ChatResult:
     """Adapta mensajes al Google Gemini SDK (google-generativeai)."""
     import google.generativeai as genai  # lazy import — solo cuando se usa Gemini
+    from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
     genai.configure(api_key=settings.ai_api_key)
 
@@ -139,14 +147,25 @@ async def _gemini_chat(messages: list[dict], model: str, response_format: str | 
         (m["content"] for m in reversed(messages) if m["role"] == "user"), ""
     )
 
-    gen_config: dict = {}
+    gen_config: dict = {
+        "temperature": 0.2,
+        "top_p": 0.25,
+    }
     if response_format == "json_object":
         gen_config["response_mime_type"] = "application/json"
+
+    safety_settings = {
+        HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+        HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+        HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+        HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+    }
 
     gen_model = genai.GenerativeModel(
         model_name=model,
         system_instruction=system_content or None,
-        generation_config=gen_config if gen_config else None,
+        generation_config=gen_config,
+        safety_settings=safety_settings,
     )
 
     response = await gen_model.generate_content_async(user_content)

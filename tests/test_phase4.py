@@ -175,8 +175,9 @@ async def test_ws_token_invalido():
 
 @pytest.mark.asyncio
 async def test_ws_token_valido_bienvenida():
-    """Con token válido el servidor debe enviar mensaje de bienvenida."""
+    """Con token válido el servidor debe enviar mensaje de bienvenida generado por IA."""
     from datetime import datetime, timezone, timedelta
+    from api.services.ai_factory import ChatResult
 
     sesion_doc = {
         "token": "token-valido-123",
@@ -191,6 +192,14 @@ async def test_ws_token_valido_bienvenida():
         "costeo": {"costo_total": 12500.50},
     }
 
+    mock_bv = ChatResult(
+        text='{"mensaje_usuario": "Viaje de Monterrey a Guadalajara cotizado. Total: $12,500.50 MXN.", "justificacion": [], "supuestos_clave": []}',
+        tokens_entrada=100,
+        tokens_salida=50,
+        proveedor="gemini",
+        modelo="gemini-test",
+    )
+
     db_mock = MagicMock()
     sesiones_col = _make_col(sesion_doc)
     db_mock.__getitem__ = MagicMock(return_value=sesiones_col)
@@ -198,13 +207,20 @@ async def test_ws_token_valido_bienvenida():
 
     try:
         with patch("api.routers.chat.validate_token", AsyncMock(return_value=sesion_doc)), \
+             patch("api.routers.chat.chat_completion", AsyncMock(return_value=mock_bv)), \
              patch("api.routers.chat.get_db", return_value=db_mock), \
              TestClient(app) as client:
             with client.websocket_connect("/chat/token-valido-123") as ws:
-                msg = json.loads(ws.receive_text())
-                assert msg["tipo"] == "bienvenida"
-                assert "Monterrey" in msg["mensaje"]
-                assert "Guadalajara" in msg["mensaje"]
+                # Descarta mensajes de estado/thinking hasta tipo=bienvenida
+                msg = None
+                for _ in range(10):
+                    msg = json.loads(ws.receive_text())
+                    if msg.get("tipo") == "bienvenida":
+                        break
+                assert msg is not None and msg["tipo"] == "bienvenida"
+                msg_usuario = msg.get("mensaje_usuario", "")
+                assert "Monterrey" in msg_usuario or "Guadalajara" in msg_usuario, \
+                    f"mensaje_usuario no menciona ciudades: {msg_usuario!r}"
     finally:
         app.dependency_overrides.clear()
 

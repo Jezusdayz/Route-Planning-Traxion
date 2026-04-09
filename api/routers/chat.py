@@ -38,6 +38,25 @@ def _ts() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _parse_explicacion(raw: str) -> dict | None:
+    """Extrae el dict de explicacion del texto del modelo.
+
+    Soporta respuestas con fences markdown (```json … ```) o JSON puro.
+    Retorna None si no se puede parsear.
+    """
+    text = raw.strip()
+    if text.startswith("```"):
+        # Quitar primera línea (```json o ```) y el cierre ```
+        lines = text.splitlines()
+        text = "\n".join(lines[1:])
+        if text.rstrip().endswith("```"):
+            text = text.rstrip()[:-3].rstrip()
+    try:
+        return json.loads(text)
+    except (json.JSONDecodeError, ValueError):
+        return None
+
+
 @router.websocket("/chat/{token}")
 async def chat_viaje(websocket: WebSocket, token: str):
     db = get_db()
@@ -49,32 +68,80 @@ async def chat_viaje(websocket: WebSocket, token: str):
 
     await websocket.accept()
 
-    # Bienvenida usando secciones canónicas del Gran JSON
+    # ── BIENVENIDA: explicación IA con Gran JSON completo ─────────────────────
     input_u = sesion.get("input_usuario") or {}
-    resultado_s = sesion.get("resultado") or {}
     costeo_s = sesion.get("costeo") or {}
-    costo_total = resultado_s.get("costo_total") or costeo_s.get("costo_total_cotizacion", 0.0)
 
-    bienvenida = {
+    await _thinking(websocket, "bienvenida", True)
+    bienvenida_proveedor = settings.ai_provider
+    bienvenida_modelo = settings.ai_model
+    bienvenida_tokens_entrada = bienvenida_tokens_salida = 0
+    try:
+        system_prompt_bienvenida = get_system_prompt("explicacion")
+        bv_result = await chat_completion(
+            messages=[
+                {"role": "system", "content": system_prompt_bienvenida},
+                {"role": "user", "content": _gran_json(sesion)},
+            ]
+        )
+        bienvenida_tokens_entrada = bv_result.tokens_entrada
+        bienvenida_tokens_salida = bv_result.tokens_salida
+        bienvenida_proveedor = bv_result.proveedor
+        bienvenida_modelo = bv_result.modelo
+        bienvenida_datos = _parse_explicacion(bv_result.text) or {
+                "mensaje_usuario": bv_result.text,
+                "justificacion": [],
+                "supuestos_clave": [],
+            }
+    except Exception as exc:
+        logger.warning("Error en bienvenida IA: %s", exc)
+        bienvenida_proveedor = "sistema"
+        bienvenida_modelo = "n/a"
+        resultado_s = sesion.get("resultado") or {}
+        costo_total = resultado_s.get("costo_total") or costeo_s.get("costo_total", 0.0)
+        bienvenida_datos = {
+            "mensaje_usuario": (
+                f"[Sistema — IA no disponible: {exc}] "
+                f"Viaje cotizado de {input_u.get('origen_texto', '')} "
+                f"a {input_u.get('destino_texto', '')}. "
+                f"Total: ${costo_total:,.2f} MXN."
+            ),
+            "justificacion": [],
+            "supuestos_clave": [],
+        }
+
+    await _thinking(websocket, "bienvenida", False)
+
+    # Persistir explicacion inicial si la sesión aún no la tiene
+    if not sesion.get("explicacion"):
+        await update_seccion(token, "explicacion", bienvenida_datos, db)
+
+    # Acumular métricas de la bienvenida
+    if bienvenida_tokens_entrada or bienvenida_tokens_salida:
+        await incrementar_metricas(
+            token,
+            tokens_entrada=bienvenida_tokens_entrada,
+            tokens_salida=bienvenida_tokens_salida,
+            db=db,
+        )
+
+    bienvenida_msg = {
         "tipo": "bienvenida",
-        "mensaje": (
-            f"¡Hola! Tu viaje de {input_u.get('origen_texto', '')} "
-            f"a {input_u.get('destino_texto', '')} "
-            f"ha sido cotizado exitosamente. "
-            f"Total: ${costo_total:,.2f} MXN. "
-            "¿Deseas ajustar algún detalle del viaje?"
-        ),
+        "generado_por": bienvenida_proveedor,
         "costeo": costeo_s,
+        **bienvenida_datos,
     }
-    await _send(websocket, bienvenida)
+    await _send(websocket, bienvenida_msg)
 
     # Registrar bienvenida en historial de auditoría
     await append_historial(db=db, token=token, entry={
         "role": "tracy",
         "tipo": "bienvenida",
-        "mensaje": bienvenida["mensaje"],
-        "proveedor": "sistema",
-        "modelo": "n/a",
+        "mensaje": bienvenida_datos.get("mensaje_usuario", ""),
+        "justificacion": bienvenida_datos.get("justificacion", []),
+        "supuestos_clave": bienvenida_datos.get("supuestos_clave", []),
+        "proveedor": bienvenida_proveedor,
+        "modelo": bienvenida_modelo,
         "timestamp": _ts(),
     })
 
@@ -184,21 +251,18 @@ async def chat_viaje(websocket: WebSocket, token: str):
                 tokens_fase8_salida = fase8_result.tokens_salida
                 fase8_proveedor = fase8_result.proveedor
                 fase8_modelo = fase8_result.modelo
-                respuesta_datos = (
-                    json.loads(fase8_result.text)
-                    if fase8_result.text.strip().startswith("{")
-                    else {
+                respuesta_datos = _parse_explicacion(fase8_result.text) or {
                         "mensaje_usuario": fase8_result.text,
                         "justificacion": [],
                         "supuestos_clave": [],
                     }
-                )
             except Exception as exc:
                 logger.warning("Error en explicación IA: %s", exc)
-                fase8_proveedor = "fallback"
+                fase8_proveedor = "sistema"
                 fase8_modelo = "n/a"
                 respuesta_datos = {
                     "mensaje_usuario": (
+                        f"[Generado por sistema — IA no disponible] "
                         f"Viaje actualizado: {resultado['vehiculo_seleccionado']} "
                         f"× {resultado['unidades']} unidad(es). "
                         f"Total: ${resultado['costo_total']:,.2f} MXN."
@@ -224,6 +288,8 @@ async def chat_viaje(websocket: WebSocket, token: str):
                 "role": "tracy",
                 "tipo": "respuesta",
                 "mensaje": respuesta_datos.get("mensaje_usuario", ""),
+                "justificacion": respuesta_datos.get("justificacion", []),
+                "supuestos_clave": respuesta_datos.get("supuestos_clave", []),
                 "proveedor": fase8_proveedor,
                 "modelo": fase8_modelo,
                 "timestamp": _ts(),
@@ -235,6 +301,7 @@ async def chat_viaje(websocket: WebSocket, token: str):
 
             await _send(websocket, {
                 "tipo": "respuesta",
+                "generado_por": fase8_proveedor,
                 "resultado": resultado,
                 "metricas": {
                     "tokens_entrada": tokens_fase8_entrada,
