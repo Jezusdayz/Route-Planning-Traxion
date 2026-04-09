@@ -51,6 +51,7 @@ async def seleccionar_flota(
             "capacidad_pasajeros": vehiculo.capacidad.pasajeros,
             "rendimiento_km_l": vehiculo.combustible.rendimiento_km_l,
             "tanque_l": vehiculo.combustible.capacidad_tanque_l,
+            "costo_mantenimiento_km": vehiculo.mantenimiento.costo_km,
             "autonomia_total": round(
                 vehiculo.combustible.capacidad_tanque_l
                 * vehiculo.combustible.rendimiento_km_l

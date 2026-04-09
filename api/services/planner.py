@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from api.models.nivel_servicio import NivelServicio
+from api.services.cost_engine import calcular_costeo
 from api.services.fleet_manager import seleccionar_flota
 from api.services.validator import (
     validar_autonomia,
@@ -29,10 +30,12 @@ async def calcular_mision(
     1. Proyecta distancia/tiempo operativo (× factor × 2 para round-trip).
     2. Selecciona la flota óptima.
     3. Ejecuta las tres validaciones de viabilidad.
-    4. Persiste el resultado en la sesión (acumulativo).
+    4. Si viable: calcula costeo granular y supuestos.
+    5. Persiste el resultado en la sesión (acumulativo).
 
     Returns:
-        Dict con claves 'planeacion', 'operacion', 'validaciones'.
+        Dict con claves 'planeacion', 'operacion', 'validaciones',
+        'supuestos' y 'costeo'.
 
     Raises:
         ValueError con detalles si alguna validación falla.
@@ -69,25 +72,43 @@ async def calcular_mision(
         "tiempo_operacion": val_tiempo,
     }
 
-    resultado = {
-        "planeacion": planeacion,
-        "operacion": operacion,
-        "validaciones": validaciones,
-    }
+    errores = (
+        [
+            f"Capacidad insuficiente: se requieren {val_capacidad['requerida']} pasajeros "
+            f"pero la flota cubre {val_capacidad['capacidad_total']}."
+        ]
+        if not val_capacidad["valido"]
+        else []
+    ) + (
+        [
+            f"Autonomía insuficiente: la ruta requiere {val_autonomia['minimo_requerido_km']} km "
+            f"pero el vehículo tiene {val_autonomia['autonomia_vehiculo_km']} km."
+        ]
+        if not val_autonomia["valido"]
+        else []
+    ) + (
+        [
+            f"Tiempo de operación excede límite: {val_tiempo['estimado_h']}h > "
+            f"{val_tiempo['maximo_permitido_h']}h máximo permitido."
+        ]
+        if not val_tiempo["valido"]
+        else []
+    )
 
-    errores = [
-        f"Capacidad insuficiente: se requieren {val_capacidad['requerida']} pasajeros "
-        f"pero la flota cubre {val_capacidad['capacidad_total']}."
-        for _ in [None] if not val_capacidad["valido"]
-    ] + [
-        f"Autonomía insuficiente: la ruta requiere {val_autonomia['minimo_requerido_km']} km "
-        f"pero el vehículo tiene {val_autonomia['autonomia_vehiculo_km']} km."
-        for _ in [None] if not val_autonomia["valido"]
-    ] + [
-        f"Tiempo de operación excede límite: {val_tiempo['estimado_h']}h > "
-        f"{val_tiempo['maximo_permitido_h']}h máximo permitido."
-        for _ in [None] if not val_tiempo["valido"]
-    ]
+    supuestos: dict | None = None
+    costeo: dict | None = None
+
+    if not errores:
+        resultado_costeo = await calcular_costeo(
+            operacion=operacion,
+            nivel=nivel,
+            distancia_operativa_km=distancia_operativa,
+            tiempo_operativo_h=tiempo_operativo,
+            pasajeros=pasajeros,
+            db=db,
+        )
+        supuestos = resultado_costeo["supuestos"]
+        costeo = resultado_costeo["costeo"]
 
     await db[_COLLECTION].update_one(
         {"token": token},
@@ -98,6 +119,8 @@ async def calcular_mision(
                 "validaciones": validaciones,
                 "viaje_viable": len(errores) == 0,
                 "errores_viabilidad": errores,
+                "supuestos": supuestos,
+                "costeo": costeo,
                 "fase_actual": "planeacion",
                 "actualizado_en": datetime.now(timezone.utc),
             }
@@ -107,4 +130,11 @@ async def calcular_mision(
     if errores:
         raise ValueError(" | ".join(errores))
 
-    return resultado
+    return {
+        "planeacion": planeacion,
+        "operacion": operacion,
+        "validaciones": validaciones,
+        "supuestos": supuestos,
+        "costeo": costeo,
+    }
+
