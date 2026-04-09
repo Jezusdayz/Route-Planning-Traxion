@@ -71,19 +71,23 @@ document.addEventListener('DOMContentLoaded', function() {
             map.getSource('route').setData(geojson);
         } else {
             map.addLayer({
-                'id': 'route',
-                'type': 'line',
-                'source': {
-                    'type': 'geojson',
-                    'data': geojson
-                },
-                'layout': { 'line-join': 'round', 'line-cap': 'round' },
-                'paint': {
-                    'line-color': '#007bff',
-                    'line-width': 5,
-                    'line-opacity': 0.8
-                }
-            });
+    'id': 'route',
+    'type': 'line',
+    'source': {
+        'type': 'geojson',
+        'data': geojson
+    },
+    'layout': { 
+        'line-join': 'round', 
+        'line-cap': 'round' 
+    },
+    'paint': {
+        
+        'line-color': 'rgb(208, 223, 0)', 
+        'line-width': 5,
+        'line-opacity': 0.8
+    }
+});
         }
     }
 
