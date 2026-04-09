@@ -1,7 +1,8 @@
 """Motor de IA multi-proveedor usando httpx.
 
 Soporta cualquier proveedor compatible con OpenAI Chat Completions
-(OpenAI, GitHub Models, Azure OpenAI, Ollama) y Anthropic Messages API.
+(OpenAI, GitHub Models, Azure OpenAI, Ollama), Anthropic Messages API
+y Google Gemini via google-generativeai SDK.
 """
 
 import json
@@ -34,6 +35,8 @@ async def chat_completion(
         return await _openai_chat(messages, target_model, response_format)
     if provider == "anthropic":
         return await _anthropic_chat(messages, target_model)
+    if provider == "gemini":
+        return await _gemini_chat(messages, target_model, response_format)
 
     raise ValueError(f"Proveedor de IA no soportado: {provider!r}")
 
@@ -92,3 +95,30 @@ async def _anthropic_chat(messages: list[dict], model: str) -> str:
         data = response.json()
 
     return data["content"][0]["text"]
+
+
+async def _gemini_chat(messages: list[dict], model: str, response_format: str | None) -> str:
+    """Adapta mensajes al Google Gemini SDK (google-generativeai)."""
+    import google.generativeai as genai  # lazy import — solo cuando se usa Gemini
+
+    genai.configure(api_key=settings.ai_api_key)
+
+    system_content = next(
+        (m["content"] for m in messages if m["role"] == "system"), ""
+    )
+    user_content = next(
+        (m["content"] for m in reversed(messages) if m["role"] == "user"), ""
+    )
+
+    gen_config: dict = {}
+    if response_format == "json_object":
+        gen_config["response_mime_type"] = "application/json"
+
+    gen_model = genai.GenerativeModel(
+        model_name=model,
+        system_instruction=system_content or None,
+        generation_config=gen_config if gen_config else None,
+    )
+
+    response = await gen_model.generate_content_async(user_content)
+    return response.text
