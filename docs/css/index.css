@@ -378,3 +378,55 @@ footer {
         font-size: 1rem;
     }
 }
+
+/* ============================= */
+/* SECCIONES AMARILLAS */
+/* ============================= */
+.bg-yellow {
+    background-color: rgb(208, 223, 0);
+    color: rgb(83, 86, 90);
+}
+
+.bg-yellow h2 {
+    margin-bottom: 15px;
+}
+
+.bg-yellow p {
+    max-width: 900px;
+    margin: 0 auto 25px auto;
+}
+
+/* Tarjetas en fondo amarillo */
+.card-yellow {
+    background-color: #ffffff;
+    border: 2px solid rgb(83, 86, 90);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Sección CTA */
+.cta-yellow {
+    background-color: rgb(208, 223, 0);
+    color: rgb(83, 86, 90);
+    text-align: center;
+    padding: 70px 20px;
+}
+
+.cta-yellow h2 {
+    font-size: 2.2rem;
+    margin-bottom: 15px;
+}
+
+.cta-yellow p {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
+
+/* Ajuste del botón en CTA */
+.cta-yellow .btn-primary {
+    background-color: rgb(83, 86, 90);
+    color: #ffffff;
+}
+
+.cta-yellow .btn-primary:hover {
+    background-color: #333333;
+}
