@@ -2,6 +2,7 @@
 
 import json
 import logging
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -12,7 +13,7 @@ from api.services.auth import validate_token
 from api.services.gatekeeper import gatekeeper
 from api.services.pipeline import recalcular_viaje
 from api.services.resultado_builder import construir_resultado, persistir_resultado
-from api.services.session_manager import expire_session, get_session
+from api.services.session_manager import append_historial, expire_session, get_session, update_seccion
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["chat"])
@@ -27,9 +28,13 @@ async def _thinking(ws: WebSocket, fase: str, activo: bool) -> None:
 
 
 def _gran_json(sesion: dict) -> str:
-    """Serializa la sesión completa (sin _id) para el Gran JSON de Tracy."""
-    datos = {k: v for k, v in sesion.items() if k != "_id"}
+    """Serializa la sesión completa (sin _id ni historial) para el Gran JSON de Tracy."""
+    datos = {k: v for k, v in sesion.items() if k not in ("_id", "historial")}
     return json.dumps(datos, ensure_ascii=False, default=str)
+
+
+def _ts() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 @router.websocket("/chat/{token}")
@@ -43,23 +48,35 @@ async def chat_viaje(websocket: WebSocket, token: str):
 
     await websocket.accept()
 
+    # Bienvenida usando secciones canónicas del Gran JSON
+    input_u = sesion.get("input_usuario") or {}
+    resultado_s = sesion.get("resultado") or {}
+    costeo_s = sesion.get("costeo") or {}
+    costo_total = resultado_s.get("costo_total") or costeo_s.get("costo_total", 0.0)
+
     bienvenida = {
         "tipo": "bienvenida",
         "mensaje": (
-            f"¡Hola! Tu viaje de {sesion['origen']} a {sesion['destino']} "
+            f"¡Hola! Tu viaje de {input_u.get('origen_texto', '')} "
+            f"a {input_u.get('destino_texto', '')} "
             f"ha sido cotizado exitosamente. "
-            f"Distancia: {sesion['distancia_km']} km. "
-            f"Total: ${sesion['cotizacion']['total']:,.2f} MXN. "
+            f"Total: ${costo_total:,.2f} MXN. "
             "¿Deseas ajustar algún detalle del viaje?"
         ),
-        "cotizacion": sesion.get("cotizacion"),
-        "costeo": sesion.get("costeo"),
+        "costeo": costeo_s,
     }
     await _send(websocket, bienvenida)
 
     try:
         while True:
             mensaje = await websocket.receive_text()
+
+            # Registrar mensaje del usuario en historial de auditoría
+            await append_historial(db=db, token=token, entry={
+                "role": "user",
+                "mensaje": mensaje,
+                "timestamp": _ts(),
+            })
 
             # ── FASE 0: Gatekeeper de Intención (con reintentos) ──────────────
             await _thinking(websocket, "gatekeeper", True)
@@ -138,6 +155,16 @@ async def chat_viaje(websocket: WebSocket, token: str):
                     "supuestos_clave": [],
                 }
             await _thinking(websocket, "explicacion", False)
+
+            # Persistir sección explicacion en sesión
+            await update_seccion(token, "explicacion", respuesta_datos, db)
+
+            # Registrar respuesta de Tracy en historial de auditoría
+            await append_historial(db=db, token=token, entry={
+                "role": "tracy",
+                "mensaje": respuesta_datos.get("mensaje_usuario", ""),
+                "timestamp": _ts(),
+            })
 
             await _send(websocket, {
                 "tipo": "respuesta",
