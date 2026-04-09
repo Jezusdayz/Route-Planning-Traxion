@@ -37,7 +37,7 @@ body {
     justify-content: center;
     gap: 5px;
     align-items: stretch;
-    height: 65vh; /* Altura fija para el dashboard */
+    height: 65vh; 
 }
 
 .contenedor {
@@ -60,22 +60,42 @@ body {
     width: 100% !important;
 }
 
-/* --- FASE 1: FORMULARIO DE TRACY (NUEVO) --- */
+/* --- FASE 1: FORMULARIO DE TRACY  --- */
 #setup-form {
     padding: 10px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     background: #fff;
     border: 1px solid #ddd;
     border-radius: 8px;
     margin: 5px;
+    overflow-y: auto;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
+}
+
+/* Nueva clase para filas de dos elementos */
+.form-row {
+    display: flex;
+    gap: 8px; 
+    width: 100%;
+    margin-bottom: 5px;
+    box-sizing: border-box;
+}
+
+.form-row input, 
+.form-row select {
+   flex: 1; 
+    min-width: 0; 
+    padding: 8px;
+    font-size: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
 }
 
 #setup-form input, #setup-form select {
@@ -83,6 +103,12 @@ body {
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+#setup-form input:focus, #setup-form select:focus {
+    border-color: #007bff;
 }
 
 #start-chat-btn {
@@ -93,12 +119,17 @@ body {
     border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
+    transition: background 0.3s;
 }
 
-/* --- FASE 2: CHAT DINÁMICO (AJUSTADO PARA LLENAR CARD) --- */
+#start-chat-btn:hover {
+    background: #218838;
+}
+
+/* --- FASE 2: CHAT DINÁMICO --- */
 #chat-container {
-    flex: 1; /* Esto hace que el chat llene la tarjeta gris */
-    display: none; /* Se activa a 'flex' por JS */
+    flex: 1; 
+    display: none; 
     flex-direction: column;
     background-color: #ffffff;
     border-radius: 8px;
@@ -108,7 +139,7 @@ body {
 }
 
 #chat-window {
-    flex: 1; /* Los mensajes ocupan todo el alto disponible */
+    flex: 1; 
     overflow-y: auto;
     padding: 15px;
     background: #fdfdfd;
@@ -122,10 +153,10 @@ body {
     border-top: 1px solid #eee;
     background: white;
     padding: 8px;
-    flex-shrink: 0; /* Evita que el input desaparezca */
+    flex-shrink: 0;
 }
 
-/* --- PANEL DE MONITOREO (NUEVO) --- */
+/* --- PANEL DE MONITOREO --- */
 #monitoring-grid {
     display: flex;
     flex-direction: column;
@@ -162,7 +193,7 @@ body {
 .fill {
     height: 100%;
     background: #28a745;
-    width: 100%; /* El JS controlará el porcentaje */
+    width: 100%; 
     transition: width 0.5s ease;
 }
 

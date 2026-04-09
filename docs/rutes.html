@@ -17,35 +17,46 @@
     <main class="container">
         <section class="flex-wrapper">
             <article class="contenedor">
-                <h2>Asistente Tracy</h2>
-                <div id="agent-wrapper" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
-                    
-                    <div id="setup-form">
-                        <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Configura los parámetros de la ruta:</p>
-                        <div class="form-group" style="display: flex; flex-direction: column; gap: 5px;">
-                            <input type="text" id="route-origin" placeholder="Origen" style="padding: 8px; font-size: 12px;">
-                            <input type="text" id="route-dest" placeholder="Destino" style="padding: 8px; font-size: 12px;">
-                            <select id="unit-type" style="padding: 8px; font-size: 12px;">
-                                <option value="40">Unidad 40 Plazas</option>
-                                <option value="20">Unidad 20 Plazas</option>
-                            </select>
-                        </div>
-                        <button id="start-chat-btn" onclick="startAgent()" style="margin-top: 10px; padding: 10px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Configurar Agente</button>
-                    </div>
+    <h2>Asistente Tracy</h2>
+    <div id="agent-wrapper" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+        
+        <div id="setup-form" style="padding: 10px;"> <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Configura los parámetros del servicio:</p>
+    <div class="form-group">
+        <input type="text" id="route-origin" placeholder="Origen de la ruta">
+        <input type="text" id="route-dest" placeholder="Destino de la ruta">
+        
+        <div class="form-row">
+            <input type="number" id="passengers" placeholder="Pasajeros">
+            <select id="service-level">
+                <option value="" disabled selected>Nivel de servicio</option>
+                <option value="economico">Económico</option>
+                <option value="empresarial">Empresarial</option>
+                <option value="ejecutivo">Ejecutivo</option>
+            </select>
+        </div>
 
-                    <div id="chat-container" style="display: none; flex: 1; flex-direction: column; background: white;">
-                        <div id="chat-window" style="flex: 1; overflow-y: auto; padding: 10px;">
-                            <div class="bot-msg">
-                                <strong>Tracy:</strong> ¡Listo! Ruta configurada. ¿En qué puedo ayudarte?
-                            </div>
-                        </div>
-                        <div class="chat-input-area" style="display: flex; border-top: 1px solid #eee; padding: 5px;">
-                            <input type="text" id="user-input" placeholder="Escribe un mensaje..." style="flex: 1; border: none; padding: 8px;">
-                            <button id="send-btn" onclick="sendMessage()" style="padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 4px;">Enviar</button>
-                        </div>
-                    </div>
+        <div class="form-row">
+            <input type="date" id="service-date">
+            <input type="time" id="service-time">
+        </div>
+    </div>
+    <button id="start-chat-btn" onclick="startAgent()">Iniciar Tracy</button>
+</div>
+
+        <div id="chat-container" style="display: none; flex: 1; flex-direction: column; background: white;">
+            <div id="chat-window" style="flex: 1; overflow-y: auto; padding: 10px;">
+                <div class="bot-msg">
+                    <strong>Tracy:</strong> ¡Listo! He registrado el servicio. ¿Deseas optimizar la ruta o revisar el manifiesto?
                 </div>
-            </article>
+            </div>
+            <div class="chat-input-area" style="display: flex; border-top: 1px solid #eee; padding: 5px;">
+                <input type="text" id="user-input" placeholder="Escribe un mensaje..." style="flex: 1; border: none; padding: 8px;">
+                <button id="send-btn" onclick="sendMessage()" style="padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 4px;">Enviar</button>
+            </div>
+        </div>
+    </div>
+</article>
+
             
             <article class="contenedor">
                 <h2>Mapa de rutas</h2>
