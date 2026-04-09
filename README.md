@@ -59,6 +59,39 @@ Endpoints disponibles:
 | `GET /db-status` | Verifica conexión a MongoDB |
 | `GET /docs` | Documentación interactiva (Swagger UI) |
 
+### Poblar la base de datos (seed)
+
+Ejecuta el script de seeding para cargar los catálogos iniciales en MongoDB:
+
+```bash
+python scripts/seed_db.py
+```
+
+El script limpia las colecciones existentes e inserta documentos validados con los modelos Pydantic:
+
+| Colección | Descripción |
+|-----------|-------------|
+| `vehiculos` | Catálogo de autobuses (ej. Scania K400) |
+| `costos_variables` | Costos operativos por km/hora (combustible, operador, mantenimiento) |
+| `costos_fijos` | Costos fijos anuales por vehículo (seguro, impuestos, cuotas) |
+| `niveles_servicio` | Niveles de calidad de servicio (Empresarial, Estándar) |
+| `seguridad` | Políticas de horas de conducción y descansos |
+| `ciudades` | Ciudades base geocodificadas (CDMX, Pachuca, Querétaro, Puebla) |
+| `rutas` | Rutas de ejemplo entre ciudades |
+
+### Ejecutar las pruebas
+
+```bash
+# Todos los tests
+.venv\Scripts\python.exe -m pytest -q
+
+# Solo servicios internos
+.venv\Scripts\python.exe -m pytest tests/test_services.py -q
+
+# Solo tests de APIs externas (mocks)
+.venv\Scripts\python.exe -m pytest tests/test_external_apis.py -q
+```
+
 ### Exponer la API con ngrok
 
 ```bash
