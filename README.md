@@ -4,6 +4,8 @@ Route Planning Solution for Traxion's Hackaton
 # LINK DE LA PAGINA:
 https://jezusdayz.github.io/Route-Planning-Traxion/
 
+# LINK DE AGENTE:
+https://logistica-pipeline--rodrigomijangos.replit.app/
 
 # 🚀 TraxIA – Optimización Inteligente de Rutas
 
