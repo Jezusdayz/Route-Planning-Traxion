@@ -53,10 +53,11 @@ async def chat_viaje(websocket: WebSocket, token: str):
     input_u = sesion.get("input_usuario") or {}
     resultado_s = sesion.get("resultado") or {}
     costeo_s = sesion.get("costeo") or {}
-    costo_total = resultado_s.get("costo_total") or costeo_s.get("costo_total_cotizacion", 0.0)
+    costo_total = resultado_s.get("costo_total") or costeo_s.get("costo_total", 0.0)
 
     bienvenida = {
         "tipo": "bienvenida",
+        "generado_por": "sistema",
         "mensaje": (
             f"¡Hola! Tu viaje de {input_u.get('origen_texto', '')} "
             f"a {input_u.get('destino_texto', '')} "
@@ -195,10 +196,11 @@ async def chat_viaje(websocket: WebSocket, token: str):
                 )
             except Exception as exc:
                 logger.warning("Error en explicación IA: %s", exc)
-                fase8_proveedor = "fallback"
+                fase8_proveedor = "sistema"
                 fase8_modelo = "n/a"
                 respuesta_datos = {
                     "mensaje_usuario": (
+                        f"[Generado por sistema — IA no disponible] "
                         f"Viaje actualizado: {resultado['vehiculo_seleccionado']} "
                         f"× {resultado['unidades']} unidad(es). "
                         f"Total: ${resultado['costo_total']:,.2f} MXN."
@@ -235,6 +237,7 @@ async def chat_viaje(websocket: WebSocket, token: str):
 
             await _send(websocket, {
                 "tipo": "respuesta",
+                "generado_por": fase8_proveedor,
                 "resultado": resultado,
                 "metricas": {
                     "tokens_entrada": tokens_fase8_entrada,
