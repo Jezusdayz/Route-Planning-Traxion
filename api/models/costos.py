@@ -24,3 +24,17 @@ class CostosOperativos(BaseModel):
     operador: OperadorCosto
     mantenimiento: MantenimientoCosto
     otros: OtrosCostos
+
+
+class SeguroCosto(BaseModel):
+    tipo: str
+    costo_anual: float
+
+
+class CostosFijos(BaseModel):
+    id: str = Field(..., alias="_id")
+    vehiculo_id: str
+    seguro: SeguroCosto
+    impuesto_circulacion_anual: float
+    cuotas_sindicato_anual: float
+    total_anual: float
