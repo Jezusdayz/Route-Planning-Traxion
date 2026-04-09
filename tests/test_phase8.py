@@ -4,6 +4,13 @@ import json
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from api.services.ai_factory import ChatResult
+
+
+def _cr(text: str) -> ChatResult:
+    """Helper para crear un ChatResult con contenido de texto."""
+    return ChatResult(text=text, tokens_entrada=10, tokens_salida=5, proveedor="openai", modelo="test")
+
 
 # ---------------------------------------------------------------------------
 # Tests: resultado_builder (función pura)
@@ -91,7 +98,7 @@ def _gate_json(entendido=True, cambio=True, origen="Puebla", pasajeros=None):
 async def test_gatekeeper_entendido_exitoso():
     from api.services.gatekeeper import gatekeeper
 
-    with patch("api.services.gatekeeper.chat_completion", AsyncMock(return_value=_gate_json())):
+    with patch("api.services.gatekeeper.chat_completion", AsyncMock(return_value=_cr(_gate_json()))):
         resultado = await gatekeeper("quiero ir a Monterrey desde Puebla", {})
 
     assert resultado.entendido is True
@@ -110,7 +117,7 @@ async def test_gatekeeper_cambio_no_detectado():
         "cambio_detectado": False,
         "input_usuario": None,
     })
-    with patch("api.services.gatekeeper.chat_completion", AsyncMock(return_value=respuesta)):
+    with patch("api.services.gatekeeper.chat_completion", AsyncMock(return_value=_cr(respuesta))):
         resultado = await gatekeeper("¿cuánto cuesta el seguro?", {})
 
     assert resultado.entendido is True
@@ -127,7 +134,7 @@ async def test_gatekeeper_reintenta_cuando_no_entendido():
 
     with patch(
         "api.services.gatekeeper.chat_completion",
-        AsyncMock(side_effect=[fallo, exito]),
+        AsyncMock(side_effect=[_cr(fallo), _cr(exito)]),
     ):
         resultado = await gatekeeper("quiero cambiar el destino", {}, max_reintentos=2)
 
@@ -143,7 +150,7 @@ async def test_gatekeeper_fallback_tras_max_reintentos():
 
     with patch(
         "api.services.gatekeeper.chat_completion",
-        AsyncMock(return_value=fallo),
+        AsyncMock(return_value=_cr(fallo)),
     ):
         resultado = await gatekeeper("xyzzy blorp", {}, max_reintentos=3)
 
@@ -161,7 +168,7 @@ async def test_gatekeeper_reintenta_tras_json_invalido():
 
     with patch(
         "api.services.gatekeeper.chat_completion",
-        AsyncMock(side_effect=[json_invalido, exito]),
+        AsyncMock(side_effect=[_cr(json_invalido), _cr(exito)]),
     ):
         resultado = await gatekeeper("quiero cambiar el destino", {}, max_reintentos=2)
 
@@ -181,7 +188,7 @@ async def test_gatekeeper_ignora_campos_extra():
             "campo_inventado": "valor_extra",
         },
     })
-    with patch("api.services.gatekeeper.chat_completion", AsyncMock(return_value=respuesta)):
+    with patch("api.services.gatekeeper.chat_completion", AsyncMock(return_value=_cr(respuesta))):
         resultado = await gatekeeper("cambiar origen a Querétaro", {})
 
     assert resultado.entendido is True

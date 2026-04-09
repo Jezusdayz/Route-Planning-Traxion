@@ -15,10 +15,12 @@ _OPENAI_COMPAT = {"openai", "github", "azure", "ollama"}
 
 
 class ChatResult(NamedTuple):
-    """Resultado de una llamada al proveedor de IA con métricas de tokens."""
+    """Resultado de una llamada al proveedor de IA con métricas de tokens y auditoría."""
     text: str
     tokens_entrada: int
     tokens_salida: int
+    proveedor: str   # proveedor de IA utilizado (solo auditoría, nunca al LLM)
+    modelo: str      # modelo exacto utilizado (solo auditoría, nunca al LLM)
 
 
 async def chat_completion(
@@ -40,7 +42,7 @@ async def chat_completion(
     target_model = model or settings.ai_model
 
     if provider in _OPENAI_COMPAT:
-        return await _openai_chat(messages, target_model, response_format)
+        return await _openai_chat(messages, target_model, response_format, provider_name=provider)
     if provider == "anthropic":
         return await _anthropic_chat(messages, target_model)
     if provider == "gemini":
@@ -49,7 +51,12 @@ async def chat_completion(
     raise ValueError(f"Proveedor de IA no soportado: {provider!r}")
 
 
-async def _openai_chat(messages: list[dict], model: str, response_format: str | None) -> ChatResult:
+async def _openai_chat(
+    messages: list[dict],
+    model: str,
+    response_format: str | None,
+    provider_name: str,
+) -> ChatResult:
     url = f"{settings.ai_base_url.rstrip('/')}/chat/completions"
     payload: dict = {"model": model, "messages": messages}
     if response_format == "json_object":
@@ -70,6 +77,8 @@ async def _openai_chat(messages: list[dict], model: str, response_format: str | 
         text=data["choices"][0]["message"]["content"],
         tokens_entrada=usage.get("prompt_tokens", 0),
         tokens_salida=usage.get("completion_tokens", 0),
+        proveedor=provider_name,
+        modelo=model,
     )
 
 
@@ -112,6 +121,8 @@ async def _anthropic_chat(messages: list[dict], model: str) -> ChatResult:
         text=data["content"][0]["text"],
         tokens_entrada=usage.get("input_tokens", 0),
         tokens_salida=usage.get("output_tokens", 0),
+        proveedor="anthropic",
+        modelo=model,
     )
 
 
@@ -145,4 +156,6 @@ async def _gemini_chat(messages: list[dict], model: str, response_format: str | 
         text=response.text,
         tokens_entrada=getattr(usage, "prompt_token_count", 0) or 0,
         tokens_salida=getattr(usage, "candidates_token_count", 0) or 0,
+        proveedor="gemini",
+        modelo=model,
     )

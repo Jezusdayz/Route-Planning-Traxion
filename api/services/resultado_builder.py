@@ -25,7 +25,7 @@ def construir_resultado(sesion: dict) -> dict:
         "unidades": operacion.get("unidades", 1),
         "distancia_total_km": planeacion.get("distancia_operativa_km", 0.0),
         "tiempo_total_h": planeacion.get("tiempo_operativo_h", 0.0),
-        "costo_total": costeo.get("costo_total_cotizacion", 0.0),
+        "costo_total": costeo.get("costo_total", 0.0),
     }
 
 

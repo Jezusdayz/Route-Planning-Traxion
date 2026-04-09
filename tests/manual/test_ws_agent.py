@@ -431,6 +431,10 @@ async def t08_historial_mongodb(token: str):
             assert "timestamp" in entry, f"entry[{i}] sin 'timestamp'"
             assert entry["role"] in ("user", "tracy", "sistema"), \
                 f"entry[{i}] role inválido: {entry['role']}"
+            # Solo entradas de tracy/sistema tienen proveedor/modelo (no las del usuario)
+            if entry["role"] != "user":
+                assert "proveedor" in entry, f"entry[{i}] ({entry['role']}) sin 'proveedor'"
+                assert "modelo" in entry,    f"entry[{i}] ({entry['role']}) sin 'modelo'"
 
         errores = [e for e in historial if e.get("tipo") == "error"]
         ok(name, f"{len(historial)} entradas | roles={set(roles)} | errores={len(errores)}")

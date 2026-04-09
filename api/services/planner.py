@@ -42,7 +42,7 @@ async def calcular_mision(
     buffer_tiempo = nivel.parametros.buffer_tiempo
 
     distancia_operativa = round(distancia_base_km * factor_dist * 2, 2)
-    tiempo_operativo = round(tiempo_base_h * buffer_tiempo * 2, 4)
+    tiempo_operativo = round(tiempo_base_h * (1 + buffer_tiempo) * 2, 4)
 
     planeacion = {
         "tipo_servicio": "point_to_point",

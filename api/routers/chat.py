@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from api.config import settings
 from api.database import get_db
 from api.services.agent_loader import get_system_prompt
 from api.services.ai_factory import chat_completion
@@ -72,6 +73,8 @@ async def chat_viaje(websocket: WebSocket, token: str):
         "role": "tracy",
         "tipo": "bienvenida",
         "mensaje": bienvenida["mensaje"],
+        "proveedor": "sistema",
+        "modelo": "n/a",
         "timestamp": _ts(),
     })
 
@@ -102,6 +105,8 @@ async def chat_viaje(websocket: WebSocket, token: str):
                     "tipo": "error",
                     "fase": "gatekeeper",
                     "mensaje": msg_error,
+                    "proveedor": settings.ai_provider,
+                    "modelo": settings.ai_model,
                     "timestamp": _ts(),
                 })
                 continue
@@ -120,6 +125,8 @@ async def chat_viaje(websocket: WebSocket, token: str):
                     "tipo": "error",
                     "fase": "gatekeeper",
                     "mensaje": msg_no_entendido,
+                    "proveedor": settings.ai_provider,
+                    "modelo": settings.ai_model,
                     "timestamp": _ts(),
                 })
                 continue
@@ -145,6 +152,8 @@ async def chat_viaje(websocket: WebSocket, token: str):
                         "tipo": "error",
                         "fase": "recalculo",
                         "mensaje": msg_recalc,
+                        "proveedor": "pipeline",
+                        "modelo": "n/a",
                         "timestamp": _ts(),
                     })
                     continue
@@ -161,6 +170,8 @@ async def chat_viaje(websocket: WebSocket, token: str):
             # ── FASE 8: Explicación persuasiva con Gran JSON completo ─────────
             await _thinking(websocket, "explicacion", True)
             tokens_fase8_entrada = tokens_fase8_salida = 0
+            fase8_proveedor = settings.ai_provider
+            fase8_modelo = settings.ai_model
             try:
                 system_prompt = get_system_prompt("explicacion")
                 fase8_result = await chat_completion(
@@ -171,6 +182,8 @@ async def chat_viaje(websocket: WebSocket, token: str):
                 )
                 tokens_fase8_entrada = fase8_result.tokens_entrada
                 tokens_fase8_salida = fase8_result.tokens_salida
+                fase8_proveedor = fase8_result.proveedor
+                fase8_modelo = fase8_result.modelo
                 respuesta_datos = (
                     json.loads(fase8_result.text)
                     if fase8_result.text.strip().startswith("{")
@@ -182,6 +195,8 @@ async def chat_viaje(websocket: WebSocket, token: str):
                 )
             except Exception as exc:
                 logger.warning("Error en explicación IA: %s", exc)
+                fase8_proveedor = "fallback"
+                fase8_modelo = "n/a"
                 respuesta_datos = {
                     "mensaje_usuario": (
                         f"Viaje actualizado: {resultado['vehiculo_seleccionado']} "
@@ -209,6 +224,8 @@ async def chat_viaje(websocket: WebSocket, token: str):
                 "role": "tracy",
                 "tipo": "respuesta",
                 "mensaje": respuesta_datos.get("mensaje_usuario", ""),
+                "proveedor": fase8_proveedor,
+                "modelo": fase8_modelo,
                 "timestamp": _ts(),
             })
 
