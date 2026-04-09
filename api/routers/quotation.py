@@ -12,6 +12,7 @@ from api.models.nivel_servicio import NivelServicio
 from api.models.vehiculo import Vehiculo
 from api.services.auth import generate_token
 from api.services.geocoding import geocode_ciudad
+from api.services.planner import calcular_mision
 from api.services.quotation import cotizar_servicio
 from api.services.routing import calcular_ruta
 from api.services.session_manager import create_session
@@ -44,6 +45,8 @@ class InicioViajeResponse(BaseModel):
     status: str
     token: str
     resumen_cotizacion: ResumenCotizacion
+    planeacion: dict | None = None
+    validaciones: dict | None = None
     ws_url: str
 
 
@@ -127,6 +130,23 @@ async def iniciar_viaje(request: InicioViajeRequest, db=Depends(get_db)):
         "cotizacion": resultado,
     }, db)
 
+    # 8. Planeación operativa + validación de viabilidad
+    planeacion_result = None
+    validaciones_result = None
+    try:
+        mision = await calcular_mision(
+            token=token,
+            pasajeros=request.pasajeros,
+            nivel=nivel,
+            distancia_base_km=ruta["distancia_km"],
+            tiempo_base_h=ruta["tiempo_h"],
+            db=db,
+        )
+        planeacion_result = mision["planeacion"]
+        validaciones_result = mision["validaciones"]
+    except ValueError as e:
+        _validation_error(str(e))
+
     resumen = ResumenCotizacion(
         origen=request.origen,
         destino=request.destino,
@@ -143,5 +163,7 @@ async def iniciar_viaje(request: InicioViajeRequest, db=Depends(get_db)):
         status="success",
         token=token,
         resumen_cotizacion=resumen,
+        planeacion=planeacion_result,
+        validaciones=validaciones_result,
         ws_url=f"ws://localhost:8000/chat/{token}",
     )
