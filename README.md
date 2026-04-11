@@ -5,6 +5,7 @@ https://jezusdayz.github.io/Route-Planning-Traxion/
 https://logistica-pipeline--rodrigomijangos.replit.app/
 
 # 🚀 TraxIA – Optimización Inteligente de Rutas
+<small> **Version:** 1.0.0 (Release Candidate) </small>
 
 **TraxIA** es un proyecto desarrollado para un **Hackathon**, enfocado en la optimización de rutas para la distribución de combustible mediante el uso de inteligencia artificial y algoritmos avanzados. Su propósito es mejorar la eficiencia logística, reducir costos operativos y promover la sostenibilidad en el sector energético.
 
