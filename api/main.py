@@ -5,7 +5,7 @@ from api.config import settings
 from api.database import get_db, lifespan
 from api.routers import chat, quotation
 
-app = FastAPI(title="Route Planning API", lifespan=lifespan)
+app = FastAPI(title="Route Planning API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
